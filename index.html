@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mano y Aguja | Catálogo de productos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream:   #f5f0e8;
+      --linen:   #ede5d4;
+      --sienna:  #8b5e3c;
+      --ink:     #2c2118;
+      --muted:   #9e8e7a;
+      --border:  #d4c8b0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      padding: 3rem 2rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 1.5rem;
+    }
+
+    header h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    header span {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toolbar p {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── GRID ── */
+    main {
+      padding: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* ── PRODUCT CARD ── */
+    .card {
+      display: flex;
+      flex-direction: column;
+      background: var(--linen);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(44,33,24,0.1);
+    }
+
+    .card-image {
+      aspect-ratio: 3 / 4;
+      background: var(--cream);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* subtle textile texture via SVG */
+    .card-image::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 6px,
+          rgba(139,94,60,0.04) 6px,
+          rgba(139,94,60,0.04) 7px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 6px,
+          rgba(139,94,60,0.04) 6px,
+          rgba(139,94,60,0.04) 7px
+        );
+    }
+
+    .card-image .placeholder-icon {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0.3;
+    }
+
+    .card-image .placeholder-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--sienna);
+      fill: none;
+      stroke-width: 1;
+    }
+
+    .card-image .placeholder-icon span {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--sienna);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* card number badge */
+    .card-image .badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    .card-body {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .card-body .name {
+      font-size: 1rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+
+    .card-body .category {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .card-body .price {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--sienna);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 4rem;
+      padding: 1.5rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer p {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      header { flex-direction: column; gap: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Mano y aguja</h1>
+    <span>Catálogo de productos</span>
+  </header>
+
+  <div class="toolbar">
+    <p>16 productos</p>
+    <p>Todos los artículos</p>
+  </div>
+
+  <main>
+    <div class="grid" id="catalog"></div>
+  </main>
+
+  <footer>
+    <p>Mano y aguja &copy; 2025</p>
+    <p>Hecho a mano</p>
+  </footer>
+
+  <script>
+    // Needle SVG icon for placeholders
+    const needleIcon = `
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <line x1="12" y1="2" x2="12" y2="16" stroke-linecap="round"/>
+        <ellipse cx="12" cy="19" rx="2.5" ry="3"/>
+        <line x1="10.5" y1="4" x2="13.5" y2="4"/>
+      </svg>
+    `;
+
+    const catalog = document.getElementById('catalog');
+
+    for (let i = 1; i <= 16; i++) {
+      catalog.innerHTML += `
+        <article class="card">
+          <div class="card-image">
+            <span class="badge">${String(i).padStart(2, '0')}</span>
+            <div class="placeholder-icon">
+              ${needleIcon}
+              <span>imagen</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <span class="category">Categoría</span>
+            <p class="name">Producto ${i}</p>
+            <p class="price">— precio</p>
+          </div>
+        </article>
+      `;
+    }
+  </script>
+
+</body>
+</html>
