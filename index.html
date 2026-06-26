@@ -1,279 +1,391 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mano y Aguja | Catálogo de productos</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --cream:   #f5f0e8;
-      --linen:   #ede5d4;
-      --sienna:  #8b5e3c;
-      --ink:     #2c2118;
-      --muted:   #9e8e7a;
-      --border:  #d4c8b0;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mano y Aguja — Catálogo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+:root {
+  --color-amarillo:       #D4B232;
+  --color-amarillo-fondo: #F9F4DB;
+  --color-azul:           #364A8A;
+  --color-azul-fondo:     #E7EAF6;
+  --color-rojo:           #DC4A3C;
+  --color-rojo-fondo:     #FBE9E7;
+  --color-crema:          #EEECE7;
+  --color-crema-oscura:   #E0DDD6;
+  --color-blanco:         #FFFFFF;
+  --color-negro:          #111111;
+  --color-gris-oscuro:    #3D3D3A;
+  --color-gris-medio:     #76756E;
+  --color-gris-claro:     #C8C5BD;
+  --color-gris-muy-claro: #E5E3DE;
+  --bg-base:       var(--color-blanco);
+  --bg-surface:    var(--color-blanco);
+  --text-primary:   var(--color-negro);
+  --text-secondary: var(--color-gris-oscuro);
+  --text-muted:     var(--color-gris-medio);
+  --border-subtle:  var(--color-gris-muy-claro);
+  --border-default: var(--color-gris-claro);
+  --shadow-md: 0 4px 12px rgba(17,17,17,0.10), 0 2px 4px rgba(17,17,17,0.06);
+  --max-width: 1152px;
+  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+img, svg { display: block; max-width: 100%; }
+button { font: inherit; cursor: pointer; background: none; border: none; padding: 0; }
+a { color: inherit; text-decoration: none; }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.nav-link {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: color var(--transition);
+}
+.nav-link:hover, .nav-link.active { color: var(--text-primary); }
 
-    body {
-      background: var(--cream);
-      color: var(--ink);
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      min-height: 100vh;
-    }
+.filter-tab {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-bottom: 13px;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+.filter-tab:hover { color: var(--text-primary); }
+.filter-tab.active { color: var(--text-primary); border-bottom-color: var(--color-negro); }
 
-    /* ── HEADER ── */
-    header {
-      padding: 3rem 2rem 2rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: baseline;
-      gap: 1.5rem;
-    }
-
-    header h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 300;
-      letter-spacing: 0.04em;
-      line-height: 1;
-    }
-
-    header span {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      font-weight: 300;
-      color: var(--muted);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    /* ── TOOLBAR ── */
-    .toolbar {
-      padding: 1rem 2rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .toolbar p {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.65rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    /* ── GRID ── */
-    main {
-      padding: 2rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
-    }
-
-    /* ── PRODUCT CARD ── */
-    .card {
-      display: flex;
-      flex-direction: column;
-      background: var(--linen);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(44,33,24,0.1);
-    }
-
-    .card-image {
-      aspect-ratio: 3 / 4;
-      background: var(--cream);
-      border-bottom: 1px solid var(--border);
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* subtle textile texture via SVG */
-    .card-image::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 6px,
-          rgba(139,94,60,0.04) 6px,
-          rgba(139,94,60,0.04) 7px
-        ),
-        repeating-linear-gradient(
-          90deg,
-          transparent,
-          transparent 6px,
-          rgba(139,94,60,0.04) 6px,
-          rgba(139,94,60,0.04) 7px
-        );
-    }
-
-    .card-image .placeholder-icon {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      opacity: 0.3;
-    }
-
-    .card-image .placeholder-icon svg {
-      width: 32px;
-      height: 32px;
-      stroke: var(--sienna);
-      fill: none;
-      stroke-width: 1;
-    }
-
-    .card-image .placeholder-icon span {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.55rem;
-      color: var(--sienna);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    /* card number badge */
-    .card-image .badge {
-      position: absolute;
-      top: 0.75rem;
-      left: 0.75rem;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.55rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-    }
-
-    .card-body {
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-
-    .card-body .name {
-      font-size: 1rem;
-      font-weight: 400;
-      letter-spacing: 0.02em;
-      color: var(--ink);
-    }
-
-    .card-body .category {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.6rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .card-body .price {
-      margin-top: 0.5rem;
-      font-size: 0.9rem;
-      font-weight: 300;
-      font-style: italic;
-      color: var(--sienna);
-    }
-
-    /* ── FOOTER ── */
-    footer {
-      margin-top: 4rem;
-      padding: 1.5rem 2rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    footer p {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.6rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      .grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 600px) {
-      .grid { grid-template-columns: repeat(2, 1fr); }
-      header { flex-direction: column; gap: 0.5rem; }
-    }
-  </style>
+.product-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  overflow: hidden;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.product-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+</style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
 
-  <header>
-    <h1>Mano y aguja</h1>
-    <span>Catálogo de productos</span>
-  </header>
+/* ── SVGs: se referencian los archivos originales de assets/ ── */
+const SVGLogo = ({ height = 48 }) => (
+  <img src="assets/logos/logo-color-ma.svg" alt="Mano y Aguja" style={{ height, display:'block' }} />
+);
 
-  <div class="toolbar">
-    <p>16 productos</p>
-    <p>Todos los artículos</p>
-  </div>
+const SVGOval = ({ size = 36 }) => (
+  <img src="assets/elements/elemento1.svg" alt="" style={{ width:size, display:'block', flexShrink:0 }} />
+);
 
-  <main>
-    <div class="grid" id="catalog"></div>
-  </main>
+const SVGBlob = ({ size = 40, color }) => (
+  <img
+    src={color === "#DC4A3C" ? "assets/elements/elemento3.svg" : "assets/elements/elemento2.svg"}
+    alt=""
+    style={{ width:size, display:'block', flexShrink:0 }}
+  />
+);
 
-  <footer>
-    <p>Mano y aguja &copy; 2025</p>
-    <p>Hecho a mano</p>
-  </footer>
+/* ── Datos ── */
+const PRODUCTS = [
+  { id:1, name:"Chaqueta de Retazos", size:"6–8 años", desc:"Algodón reciclado en parches irregulares. Cierre con botones de nácar.", tags:["Algodón reciclado","Retazos"], category:"Chaquetas", available:true, image:"assets/chaqueta.png" },
+  { id:2, name:"Chaqueta Lisa", size:"4–6 años", desc:"Popelín pesado en color entero. Bolsillos laterales reales.", tags:["Popelín"], category:"Chaquetas", available:true, image:"assets/chaqueta1.png" },
+  { id:3, name:"Chaqueta con Detalle", size:"8–10 años", desc:"Mezcla de telas de stock. Terminaciones a mano en los bordes.", tags:["Tela de stock","Hecho a mano"], category:"Chaquetas", available:true, image:"assets/chaqueta2.png" },
+  { id:4, name:"Mochila de Tela", size:"Talla única", desc:"Lona reciclada, asas reforzadas con cinta de algodón.", tags:["Lona reciclada"], category:"Mochilas", available:true, image:"assets/mochila.png" },
+  { id:5, name:"Pantalón de Franela", size:"4–6 años", desc:"Franela suave. Cintura elástica, bolsillos laterales.", tags:["Franela"], category:"Pantalones", available:false, image:"assets/pantalon.png" },
+];
 
-  <script>
-    // Needle SVG icon for placeholders
-    const needleIcon = `
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <line x1="12" y1="2" x2="12" y2="16" stroke-linecap="round"/>
-        <ellipse cx="12" cy="19" rx="2.5" ry="3"/>
-        <line x1="10.5" y1="4" x2="13.5" y2="4"/>
-      </svg>
-    `;
+const CATEGORIES = ["Todas","Pantalones","Chaquetas","Estuches","Mochilas","Baberos","Portachupetes"];
 
-    const catalog = document.getElementById('catalog');
+/* ── Componentes ── */
+function TagPill({ children }) {
+  return (
+    <span style={{
+      display:"inline-flex", alignItems:"center",
+      fontFamily:"'DM Sans',sans-serif", fontWeight:500,
+      fontSize:"12px", color:"var(--text-muted)",
+      background:"var(--color-gris-muy-claro)",
+      borderRadius:"9999px", padding:"3px 10px", lineHeight:1.4,
+    }}>{children}</span>
+  );
+}
 
-    for (let i = 1; i <= 16; i++) {
-      catalog.innerHTML += `
-        <article class="card">
-          <div class="card-image">
-            <span class="badge">${String(i).padStart(2, '0')}</span>
-            <div class="placeholder-icon">
-              ${needleIcon}
-              <span>imagen</span>
+function ProductCard({ product, onClick }) {
+  return (
+    <article className="product-card" onClick={onClick}>
+      <div style={{ position:"relative", aspectRatio:"3/4", background:"var(--color-crema)", overflow:"hidden" }}>
+        <img
+          src={product.image}
+          alt={product.name}
+          style={{
+            width:"100%", height:"100%",
+            objectFit:"cover", objectPosition:"center", display:"block",
+            opacity: product.available ? 1 : 0.5,
+            filter: product.available ? "none" : "grayscale(40%)",
+          }}
+        />
+        {!product.available && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"var(--color-gris-muy-claro)",
+            padding:"6px 12px",
+            fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
+            letterSpacing:"0.22em", fontSize:"8px",
+            color:"var(--text-muted)", textAlign:"center", textTransform:"uppercase",
+          }}>Reservada</div>
+        )}
+      </div>
+      <div style={{ padding:"20px 20px 24px", display:"flex", flexDirection:"column", gap:"6px" }}>
+        <p style={{
+          fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
+          fontSize:"0.8125rem", letterSpacing:"0.14em", textTransform:"uppercase",
+          color:"var(--text-primary)", lineHeight:1.2,
+        }}>{product.name}</p>
+        <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:"var(--text-muted)", lineHeight:1.5 }}>
+          {product.size}{product.desc ? " · " + product.desc.split(".")[0].toLowerCase() : ""}
+        </p>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:"4px", marginTop:"6px" }}>
+          {product.tags.slice(0,2).map((t,i) => <TagPill key={i}>{t}</TagPill>)}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function Header({ onBack }) {
+  return (
+    <header style={{
+      position:"sticky", top:0, zIndex:20,
+      background:"#fff", borderBottom:"1px solid var(--border-subtle)",
+    }}>
+      <div style={{
+        maxWidth:"var(--max-width)", margin:"0 auto",
+        height:"84px", padding:"0 32px",
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+      }}>
+        <div style={{cursor:"pointer"}} onClick={onBack || undefined}>
+          <SVGLogo height={64} />
+        </div>
+        <nav style={{ display:"flex", alignItems:"center", gap:"30px" }}>
+          <button className={`nav-link${!onBack?" active":""}`} onClick={onBack}>Catálogo</button>
+          <button className="nav-link">El taller</button>
+          <button className="nav-link">Contacto</button>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+function Footer() {
+  return (
+    <footer style={{
+      background:"#E8E5DF",
+      borderTop:"1px solid var(--border-subtle)",
+      padding:"48px 32px",
+    }}>
+      <div style={{
+        maxWidth:"var(--max-width)", margin:"0 auto",
+        display:"flex", justifyContent:"space-between", alignItems:"flex-start",
+        flexWrap:"wrap", gap:"32px",
+      }}>
+        <div style={{ maxWidth:"320px" }}>
+          <img
+            src="assets/logos/logo-texto-ma.svg"
+            alt="Mano y Aguja"
+            style={{ height:"22px", display:"block", marginBottom:"14px" }}
+          />
+          <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:"var(--text-secondary)", lineHeight:1.6 }}>
+            Taller textil de producción local y pequeña escala. Cada prenda es irrepetible.
+          </p>
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"16px" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+            <SVGOval size={28} />
+            <SVGBlob size={32} color="#364A8A" />
+            <SVGBlob size={30} color="#DC4A3C" />
+          </div>
+          <div style={{ display:"flex", gap:"20px" }}>
+            <a href="https://instagram.com" style={{
+              fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
+              letterSpacing:"0.16em", textTransform:"uppercase",
+              fontSize:"10px", color:"var(--text-muted)",
+            }}>Instagram</a>
+            <span style={{ color:"var(--border-default)" }}>·</span>
+            <a href="https://wa.me/message" style={{
+              fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
+              letterSpacing:"0.16em", textTransform:"uppercase",
+              fontSize:"10px", color:"var(--text-muted)",
+            }}>WhatsApp</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function CatalogView({ onSelect }) {
+  const [activeFilter, setActiveFilter] = useState("Todas");
+
+  const filtered = useMemo(() => {
+    if (activeFilter === "Todas") return PRODUCTS;
+    return PRODUCTS.filter(p => p.category === activeFilter);
+  }, [activeFilter]);
+
+  const availableCount = PRODUCTS.filter(p => p.available).length;
+
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      <Header />
+      <main style={{ flex:1, maxWidth:"var(--max-width)", margin:"0 auto", width:"100%", padding:"60px 32px 80px" }}>
+
+        {/* Hero */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:"32px", marginBottom:"48px" }}>
+          <div>
+            <p style={{ display:"flex", alignItems:"center", gap:"12px", fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", fontSize:"11px", color:"var(--text-muted)", margin:0 }}>
+              <SVGOval size={13} />
+              Lo que hay ahora
+            </p>
+            <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.02em", textTransform:"uppercase", fontSize:"clamp(2rem,5vw,3rem)", lineHeight:1.02, margin:"18px 0 0" }}>
+              {availableCount} prendas<br/>disponibles
+            </h1>
+          </div>
+          <div style={{ maxWidth:"360px" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"16px" }}>
+              <SVGOval size={34} />
+              <SVGBlob size={38} color="#364A8A" />
+              <SVGBlob size={36} color="#DC4A3C" />
+            </div>
+            <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", lineHeight:1.7, color:"var(--text-secondary)", margin:0 }}>
+              Producción basada en stock disponible. Cada prenda es irrepetible.
+            </p>
+          </div>
+        </div>
+
+        {/* Filtros */}
+        <div style={{ display:"flex", gap:"30px", flexWrap:"wrap", borderBottom:"1px solid var(--border-subtle)", marginBottom:"36px" }}>
+          {CATEGORIES.map(cat => (
+            <button key={cat} className={`filter-tab${activeFilter===cat?" active":""}`} onClick={() => setActiveFilter(cat)}>
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Grilla — 2 columnas grandes */}
+        <div style={{
+          display:"grid",
+          gridTemplateColumns:"repeat(2, 1fr)",
+          gap:"24px",
+        }}>
+          {filtered.map(p => <ProductCard key={p.id} product={p} onClick={() => onSelect(p)} />)}
+        </div>
+
+        {filtered.length === 0 && (
+          <p style={{ fontFamily:"'DM Sans',sans-serif", color:"var(--text-muted)", fontSize:"14px", marginTop:"48px" }}>
+            No hay prendas en esta categoría por ahora.
+          </p>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function DetailView({ product, onBack }) {
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      <Header onBack={onBack} />
+      <main style={{ flex:1, maxWidth:"860px", margin:"0 auto", width:"100%", padding:"0 32px 80px" }}>
+        <div style={{ padding:"20px 0" }}>
+          <button onClick={onBack} style={{
+            fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
+            letterSpacing:"0.18em", textTransform:"uppercase",
+            fontSize:"10px", color:"var(--text-muted)",
+            display:"flex", alignItems:"center", gap:"6px",
+            cursor:"pointer", background:"none", border:"none",
+          }}>← Volver al catálogo</button>
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"48px", marginTop:"16px", alignItems:"start" }}>
+          <div style={{ position:"relative", aspectRatio:"3/4", background:"var(--color-crema)", overflow:"hidden" }}>
+            <img src={product.image} alt={product.name} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+          </div>
+
+          <div style={{ paddingTop:"8px" }}>
+            <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", fontSize:"1.5rem", lineHeight:1.1, color:"var(--text-primary)" }}>
+              {product.name}
+            </h1>
+            <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", fontSize:"10px", color:"var(--text-muted)", marginTop:"8px" }}>
+              {product.size}
+            </p>
+            <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"1rem", color:"var(--text-secondary)", lineHeight:1.7, marginTop:"20px" }}>
+              {product.desc}
+            </p>
+            <div style={{ marginTop:"24px" }}>
+              <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", fontSize:"9px", color:"var(--text-muted)", marginBottom:"8px" }}>Materiales</p>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:"5px" }}>
+                {product.tags.map((t,i) => <TagPill key={i}>{t}</TagPill>)}
+              </div>
+            </div>
+            <div style={{ borderTop:"1px solid var(--border-subtle)", marginTop:"32px", paddingTop:"24px" }}>
+              <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", fontSize:"9px", color:"var(--text-muted)", marginBottom:"8px" }}>Cuidado</p>
+              <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:"var(--text-muted)", lineHeight:1.6 }}>Lavar a mano o máquina en frío. No usar secadora. Planchar a temperatura media.</p>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:"10px", marginTop:"32px" }}>
+              <a href="https://wa.me/message" style={{
+                display:"flex", alignItems:"center", justifyContent:"center",
+                background:"var(--color-azul)", color:"#fff",
+                padding:"16px 24px",
+                fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
+                letterSpacing:"0.18em", fontSize:"10px", textTransform:"uppercase",
+              }}>Consultar por WhatsApp</a>
+              <a href="https://instagram.com" style={{
+                display:"flex", alignItems:"center", justifyContent:"center",
+                border:"2px solid var(--color-azul)", color:"var(--color-azul)",
+                padding:"14px 24px",
+                fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
+                letterSpacing:"0.18em", fontSize:"10px", textTransform:"uppercase",
+              }}>Ver en Instagram</a>
             </div>
           </div>
-          <div class="card-body">
-            <span class="category">Categoría</span>
-            <p class="name">Producto ${i}</p>
-            <p class="price">— precio</p>
-          </div>
-        </article>
-      `;
-    }
-  </script>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
 
+function App() {
+  const [selected, setSelected] = useState(null);
+  return selected
+    ? <DetailView product={selected} onBack={() => setSelected(null)} />
+    : <CatalogView onSelect={setSelected} />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
 </body>
 </html>
