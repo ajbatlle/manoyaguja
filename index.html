@@ -91,7 +91,17 @@ a { color: inherit; text-decoration: none; }
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useMemo } = React;
+const { useState, useMemo, useEffect } = React;
+
+function useWindowWidth() {
+  const [width, setWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return width;
+}
 
 /* ── SVGs: se referencian los archivos originales de assets/ ── */
 const SVGLogo = ({ height = 48 }) => (
@@ -177,6 +187,7 @@ function ProductCard({ product, onClick }) {
 }
 
 function Header({ onBack }) {
+  const isMobile = useWindowWidth() < 640;
   return (
     <header style={{
       position:"sticky", top:0, zIndex:20,
@@ -184,33 +195,39 @@ function Header({ onBack }) {
     }}>
       <div style={{
         maxWidth:"var(--max-width)", margin:"0 auto",
-        height:"84px", padding:"0 32px",
+        height: isMobile ? "60px" : "84px",
+        padding: isMobile ? "0 16px" : "0 32px",
         display:"flex", alignItems:"center", justifyContent:"space-between",
       }}>
         <div style={{cursor:"pointer"}} onClick={onBack || undefined}>
-          <SVGLogo height={64} />
+          <SVGLogo height={isMobile ? 40 : 64} />
         </div>
-        <nav style={{ display:"flex", alignItems:"center", gap:"30px" }}>
-          <button className={`nav-link${!onBack?" active":""}`} onClick={onBack}>Catálogo</button>
-          <button className="nav-link">El taller</button>
-          <button className="nav-link">Contacto</button>
-        </nav>
+        {!isMobile && (
+          <nav style={{ display:"flex", alignItems:"center", gap:"30px" }}>
+            <button className={`nav-link${!onBack?" active":""}`} onClick={onBack}>Catálogo</button>
+            <button className="nav-link">El taller</button>
+            <button className="nav-link">Contacto</button>
+          </nav>
+        )}
       </div>
     </header>
   );
 }
 
 function Footer() {
+  const isMobile = useWindowWidth() < 640;
   return (
     <footer style={{
       background:"#E8E5DF",
       borderTop:"1px solid var(--border-subtle)",
-      padding:"48px 32px",
+      padding: isMobile ? "32px 16px" : "48px 32px",
     }}>
       <div style={{
         maxWidth:"var(--max-width)", margin:"0 auto",
-        display:"flex", justifyContent:"space-between", alignItems:"flex-start",
-        flexWrap:"wrap", gap:"32px",
+        display:"flex",
+        flexDirection: isMobile ? "column" : "row",
+        justifyContent:"space-between", alignItems: isMobile ? "flex-start" : "flex-start",
+        gap:"32px",
       }}>
         <div style={{ maxWidth:"320px" }}>
           <img
@@ -249,6 +266,7 @@ function Footer() {
 
 function CatalogView({ onSelect }) {
   const [activeFilter, setActiveFilter] = useState("Todas");
+  const isMobile = useWindowWidth() < 640;
 
   const filtered = useMemo(() => {
     if (activeFilter === "Todas") return PRODUCTS;
@@ -260,33 +278,35 @@ function CatalogView({ onSelect }) {
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
       <Header />
-      <main style={{ flex:1, maxWidth:"var(--max-width)", margin:"0 auto", width:"100%", padding:"60px 32px 80px" }}>
+      <main style={{ flex:1, maxWidth:"var(--max-width)", margin:"0 auto", width:"100%", padding: isMobile ? "32px 16px 60px" : "60px 32px 80px" }}>
 
         {/* Hero */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:"32px", marginBottom:"48px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "flex-end", gap: isMobile ? "20px" : "32px", marginBottom: isMobile ? "32px" : "48px" }}>
           <div>
             <p style={{ display:"flex", alignItems:"center", gap:"12px", fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", fontSize:"11px", color:"var(--text-muted)", margin:0 }}>
               <SVGOval size={13} />
               Lo que hay ahora
             </p>
-            <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.02em", textTransform:"uppercase", fontSize:"clamp(2rem,5vw,3rem)", lineHeight:1.02, margin:"18px 0 0" }}>
+            <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.02em", textTransform:"uppercase", fontSize: isMobile ? "clamp(1.6rem,8vw,2.2rem)" : "clamp(2rem,5vw,3rem)", lineHeight:1.02, margin:"18px 0 0" }}>
               {availableCount} prendas<br/>disponibles
             </h1>
           </div>
-          <div style={{ maxWidth:"360px" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"16px" }}>
-              <SVGOval size={34} />
-              <SVGBlob size={38} color="#364A8A" />
-              <SVGBlob size={36} color="#DC4A3C" />
+          {!isMobile && (
+            <div style={{ maxWidth:"360px" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"16px" }}>
+                <SVGOval size={34} />
+                <SVGBlob size={38} color="#364A8A" />
+                <SVGBlob size={36} color="#DC4A3C" />
+              </div>
+              <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", lineHeight:1.7, color:"var(--text-secondary)", margin:0 }}>
+                Producción basada en stock disponible. Cada prenda es irrepetible.
+              </p>
             </div>
-            <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", lineHeight:1.7, color:"var(--text-secondary)", margin:0 }}>
-              Producción basada en stock disponible. Cada prenda es irrepetible.
-            </p>
-          </div>
+          )}
         </div>
 
         {/* Filtros */}
-        <div style={{ display:"flex", gap:"30px", flexWrap:"wrap", borderBottom:"1px solid var(--border-subtle)", marginBottom:"36px" }}>
+        <div style={{ display:"flex", gap: isMobile ? "16px" : "30px", flexWrap:"wrap", borderBottom:"1px solid var(--border-subtle)", marginBottom:"36px", overflowX: isMobile ? "auto" : "visible", paddingBottom: isMobile ? "0" : "0" }}>
           {CATEGORIES.map(cat => (
             <button key={cat} className={`filter-tab${activeFilter===cat?" active":""}`} onClick={() => setActiveFilter(cat)}>
               {cat}
@@ -294,11 +314,11 @@ function CatalogView({ onSelect }) {
           ))}
         </div>
 
-        {/* Grilla — 2 columnas grandes */}
+        {/* Grilla */}
         <div style={{
           display:"grid",
-          gridTemplateColumns:"repeat(2, 1fr)",
-          gap:"24px",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+          gap: isMobile ? "16px" : "24px",
         }}>
           {filtered.map(p => <ProductCard key={p.id} product={p} onClick={() => onSelect(p)} />)}
         </div>
@@ -315,10 +335,11 @@ function CatalogView({ onSelect }) {
 }
 
 function DetailView({ product, onBack }) {
+  const isMobile = useWindowWidth() < 640;
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
       <Header onBack={onBack} />
-      <main style={{ flex:1, maxWidth:"860px", margin:"0 auto", width:"100%", padding:"0 32px 80px" }}>
+      <main style={{ flex:1, maxWidth:"860px", margin:"0 auto", width:"100%", padding: isMobile ? "0 16px 60px" : "0 32px 80px" }}>
         <div style={{ padding:"20px 0" }}>
           <button onClick={onBack} style={{
             fontFamily:"'Josefin Sans',sans-serif", fontWeight:700,
@@ -329,12 +350,12 @@ function DetailView({ product, onBack }) {
           }}>← Volver al catálogo</button>
         </div>
 
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"48px", marginTop:"16px", alignItems:"start" }}>
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? "24px" : "48px", marginTop:"16px", alignItems:"start" }}>
           <div style={{ position:"relative", aspectRatio:"3/4", background:"var(--color-crema)", overflow:"hidden" }}>
             <img src={product.image} alt={product.name} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
           </div>
 
-          <div style={{ paddingTop:"8px" }}>
+          <div style={{ paddingTop: isMobile ? "0" : "8px" }}>
             <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", fontSize:"1.5rem", lineHeight:1.1, color:"var(--text-primary)" }}>
               {product.name}
             </h1>
