@@ -613,7 +613,7 @@ function CartView({ carrito, onBack }) {
     setError(null);
     setEnviando(true);
     try {
-      const res = await fetch("/.netlify/functions/crear-preferencia", {
+      const res = await fetch("/api/crear-preferencia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -5,21 +5,33 @@
   ACCESS TOKEN de la cuenta de Mercado Pago, que es una clave secreta. Si
   estuviera en el HTML, cualquiera podria leerla y cobrar en nombre del taller.
 
-  El token se configura como variable de entorno en el panel de Netlify
-  (Site settings -> Environment variables -> MP_ACCESS_TOKEN).
+  El token se configura como variable de entorno en el panel de Vercel
+  (Settings -> Environment Variables -> MP_ACCESS_TOKEN).
   Nunca se escribe en el codigo ni se sube al repositorio.
 */
 
-const { PRODUCTS, ENVIOS, MONEDA } = require("../../productos.js");
+const { PRODUCTS, ENVIOS, MONEDA } = require("../productos.js");
 
 const MP_API = "https://api.mercadopago.com/checkout/preferences";
 
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify(body)
-  };
+// Dominios a los que se permite volver despues de pagar. El navegador puede
+// mentir en la cabecera Host, asi que no se usa a ciegas para armar la URL
+// de retorno: solo se acepta el dominio propio o un despliegue de Vercel.
+const DOMINIO_PROPIO = "https://www.tallermanoyaguja.com";
+
+function sitioDeRetorno(req) {
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/+$/, "");
+
+  const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+  const limpio = String(host).split(",")[0].trim();
+
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)*\.vercel\.app$/i.test(limpio)) {
+    return "https://" + limpio;
+  }
+  if (/^(www\.)?tallermanoyaguja\.com$/i.test(limpio)) {
+    return "https://" + limpio;
+  }
+  return DOMINIO_PROPIO;
 }
 
 function limpiar(texto, max) {
@@ -27,22 +39,25 @@ function limpiar(texto, max) {
   return texto.trim().slice(0, max || 120);
 }
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return json(405, { error: "Metodo no permitido." });
+module.exports = async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Metodo no permitido." });
   }
 
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) {
     console.error("Falta la variable de entorno MP_ACCESS_TOKEN.");
-    return json(500, { error: "El medio de pago no esta configurado todavia." });
+    return res.status(500).json({ error: "El medio de pago no esta configurado todavia." });
   }
 
-  let payload;
-  try {
-    payload = JSON.parse(event.body || "{}");
-  } catch (e) {
-    return json(400, { error: "No pudimos leer el pedido." });
+  // Vercel ya deja el JSON parseado en req.body, pero si llega como texto
+  // (por ejemplo con otro Content-Type) igual se intenta leer.
+  let payload = req.body;
+  if (typeof payload === "string") {
+    try { payload = JSON.parse(payload); } catch (e) { payload = null; }
+  }
+  if (!payload || typeof payload !== "object") {
+    return res.status(400).json({ error: "No pudimos leer el pedido." });
   }
 
   // --- Validacion del carrito -------------------------------------------
@@ -50,7 +65,7 @@ exports.handler = async (event) => {
   // servidor. Asi el total cobrado no depende de lo que diga el cliente.
   const pedidos = Array.isArray(payload.items) ? payload.items : [];
   if (pedidos.length === 0) {
-    return json(400, { error: "El carrito esta vacio." });
+    return res.status(400).json({ error: "El carrito esta vacio." });
   }
 
   const vistos = new Set();
@@ -61,13 +76,13 @@ exports.handler = async (event) => {
     const producto = PRODUCTS.find((p) => p.id === id);
 
     if (!producto) {
-      return json(400, { error: "Una de las prendas ya no existe en el catalogo." });
+      return res.status(400).json({ error: "Una de las prendas ya no existe en el catalogo." });
     }
     if (!producto.available) {
-      return json(409, { error: `"${producto.name}" ya no esta disponible.` });
+      return res.status(409).json({ error: `"${producto.name}" ya no esta disponible.` });
     }
     if (vistos.has(id)) {
-      return json(400, { error: "Hay una prenda repetida en el carrito." });
+      return res.status(400).json({ error: "Hay una prenda repetida en el carrito." });
     }
     vistos.add(id);
 
@@ -84,7 +99,7 @@ exports.handler = async (event) => {
   // --- Validacion del despacho ------------------------------------------
   const envio = ENVIOS.find((e) => e.id === payload.envio);
   if (!envio) {
-    return json(400, { error: "Falta elegir como recibir el pedido." });
+    return res.status(400).json({ error: "Falta elegir como recibir el pedido." });
   }
   if (envio.price > 0) {
     items.push({
@@ -105,10 +120,10 @@ exports.handler = async (event) => {
   const comuna = limpiar(cliente.comuna, 80);
 
   if (!nombre || !email) {
-    return json(400, { error: "Necesitamos tu nombre y tu correo." });
+    return res.status(400).json({ error: "Necesitamos tu nombre y tu correo." });
   }
   if (envio.pideDireccion && (!direccion || !comuna)) {
-    return json(400, { error: "Necesitamos la direccion y la comuna para el despacho." });
+    return res.status(400).json({ error: "Necesitamos la direccion y la comuna para el despacho." });
   }
 
   const referencia = "MA-" + Date.now().toString(36).toUpperCase();
@@ -129,7 +144,7 @@ exports.handler = async (event) => {
     .filter(Boolean)
     .join(" | ");
 
-  const sitio = process.env.URL || "https://www.tallermanoyaguja.com";
+  const sitio = sitioDeRetorno(req);
 
   const preferencia = {
     items,
@@ -176,18 +191,18 @@ exports.handler = async (event) => {
     const datos = await respuesta.json();
 
     if (!respuesta.ok) {
-      // El detalle del error queda en los logs de Netlify, no se le muestra
+      // El detalle del error queda en los logs de Vercel, no se le muestra
       // al cliente: puede contener informacion de la cuenta.
       console.error("Mercado Pago rechazo la preferencia:", respuesta.status, datos);
-      return json(502, { error: "Mercado Pago no pudo generar el cobro. Intenta de nuevo en un momento." });
+      return res.status(502).json({ error: "Mercado Pago no pudo generar el cobro. Intenta de nuevo en un momento." });
     }
 
-    return json(200, {
+    return res.status(200).json({
       init_point: datos.init_point,
       referencia
     });
   } catch (e) {
     console.error("Error llamando a Mercado Pago:", e);
-    return json(502, { error: "No pudimos conectar con Mercado Pago. Intenta de nuevo." });
+    return res.status(502).json({ error: "No pudimos conectar con Mercado Pago. Intenta de nuevo." });
   }
 };

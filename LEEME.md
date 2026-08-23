@@ -9,8 +9,7 @@ Sitio: https://www.tallermanoyaguja.com
 | `index.html` | Todo el catálogo y el carrito. Es una sola página. |
 | `productos.js` | **Las prendas y los precios.** Único archivo que hay que tocar para el día a día. |
 | `gracias.html` | La página a la que vuelve el cliente después de pagar. |
-| `netlify/functions/crear-preferencia.js` | Le pide a Mercado Pago el cobro. No se toca. |
-| `netlify.toml` | Configuración del hosting. No se toca. |
+| `api/crear-preferencia.js` | Le pide a Mercado Pago el cobro. No se toca. |
 
 ## Tareas del día a día
 
@@ -64,12 +63,20 @@ Por eso los precios no se editan en `index.html`.
 El token de acceso de Mercado Pago **no está en este repositorio** y no debe
 estarlo nunca: cualquiera que lo tenga puede cobrar a nombre del taller.
 
-Vive como variable de entorno en el panel de Netlify:
+Vive como variable de entorno en el panel de Vercel:
 
-    Site configuration → Environment variables → MP_ACCESS_TOKEN
+    Settings → Environment Variables → MP_ACCESS_TOKEN
 
 Si alguna vez se filtra, hay que regenerarlo desde el panel de desarrolladores
-de Mercado Pago y actualizarlo en Netlify.
+de Mercado Pago y actualizarlo en Vercel.
+
+## Hosting
+
+El sitio corre en Vercel, no en GitHub Pages. Vercel publica los archivos de la
+raíz tal cual y convierte cada archivo de `api/` en una función de servidor.
+No hay proceso de compilación ni `package.json`: es HTML y JavaScript sin más.
+
+Cada `git push` dispara un despliegue nuevo automáticamente.
 
 ## Dónde se ven los pedidos
 
