@@ -11,6 +11,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="productos.js"></script>
 <style>
 :root {
   --color-amarillo:       #D4B232;
@@ -83,6 +84,116 @@ a { color: inherit; text-decoration: none; }
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
+
+/* ── Carrito y checkout ── */
+.cart-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+  padding: 8px 4px;
+  transition: opacity var(--transition);
+}
+.cart-button:hover { opacity: 0.65; }
+.cart-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--color-rojo);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px 24px;
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: center;
+  transition: opacity var(--transition), background var(--transition);
+}
+.btn:hover:not(:disabled) { opacity: 0.88; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primario   { background: var(--color-azul); color: #fff; border: 2px solid var(--color-azul); }
+.btn-secundario { background: none; color: var(--color-azul); border: 2px solid var(--color-azul); padding: 14px 24px; }
+
+.campo-label {
+  display: block;
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.campo {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--border-default);
+  transition: border-color var(--transition);
+}
+.campo:focus { outline: none; border-color: var(--color-azul); }
+.campo::placeholder { color: var(--color-gris-claro); }
+
+.envio-opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 16px;
+  border: 1px solid var(--border-default);
+  background: #fff;
+  transition: border-color var(--transition), background var(--transition);
+}
+.envio-opcion:hover { border-color: var(--color-azul); }
+.envio-opcion.activa { border-color: var(--color-azul); background: var(--color-azul-fondo); }
+.envio-radio {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border-default);
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.envio-opcion.activa .envio-radio { border-color: var(--color-azul); }
+.envio-opcion.activa .envio-radio::after {
+  content: "";
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--color-azul);
+}
+
+.aviso-error {
+  background: var(--color-rojo-fondo);
+  border-left: 3px solid var(--color-rojo);
+  padding: 14px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-negro);
+}
 </style>
 </head>
 <body>
@@ -117,35 +228,55 @@ const SVGBlob = ({ size = 40, color }) => (
   />
 );
 
-/* ── Datos ── */
-const PRECIO_CHAQUETA = 60000;
-const PRECIO_PANTALON = 20000;
+/* ── Datos ──
+   Vienen de productos.js, que es el mismo archivo que lee el servidor al
+   momento de cobrar. Para editar precios o prendas se toca SOLO ese archivo. */
+const { PRODUCTS, ENVIOS, MATERIALES, CUIDADO, CATEGORIES, WHATSAPP } = PRODUCTS_DATA;
 
 const formatPrecio = (n) => "$" + n.toLocaleString("es-CL");
 
-const PRODUCTS = [
-  { id:1,  name:"Chaqueta 01", price:PRECIO_CHAQUETA, category:"Chaquetas",  available:true, images:["assets/chaqueta-azul-roja1.png","assets/chaqueta-azul-roja.png"] },
-  { id:2,  name:"Chaqueta 02", price:PRECIO_CHAQUETA, category:"Chaquetas",  available:true, images:["assets/chaqueta-cuadros.png","assets/chaqueta-cuadros1.png"] },
-  { id:3,  name:"Chaqueta 03", price:PRECIO_CHAQUETA, category:"Chaquetas",  available:true, images:["assets/chaqueta-verde.png","assets/chaqueta-verde1.png"] },
+/* ── Carrito ──
+   Las prendas son piezas unicas: una misma prenda no se puede agregar dos veces.
+   Se guarda solo la lista de ids en localStorage; los precios se resuelven
+   siempre contra PRODUCTS, nunca se persisten. */
+const CART_KEY = "manoyaguja:carrito";
 
-  { id:4,  name:"Pantalón 01", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon.png"] },
-  { id:5,  name:"Pantalón 02", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon1.png"] },
-  { id:6,  name:"Pantalón 03", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon2.png"] },
-  { id:7,  name:"Pantalón 04", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon3.png"] },
-  { id:8,  name:"Pantalón 05", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon4.png"] },
-  { id:9,  name:"Pantalón 06", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon5.png"] },
-  { id:10, name:"Pantalón 07", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon6.png"] },
-  { id:11, name:"Pantalón 08", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon7.png"] },
-  { id:12, name:"Pantalón 09", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon8.png"] },
-  { id:13, name:"Pantalón 10", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon9.png"] },
-  { id:14, name:"Pantalón 11", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon10.png"] },
-  { id:15, name:"Pantalón 12", price:PRECIO_PANTALON, category:"Pantalones", available:true, images:["assets/pantalon11.png"] },
-];
+function leerCarritoGuardado() {
+  try {
+    const crudo = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    if (!Array.isArray(crudo)) return [];
+    return crudo
+      .map(Number)
+      .filter((id) => PRODUCTS.some((p) => p.id === id && p.available));
+  } catch (e) {
+    return [];
+  }
+}
 
-const MATERIALES = "Algodón y telas recicladas.";
-const CUIDADO = "Lavar a mano o máquina en frío. No usar secadora. Planchar a temperatura media.";
+function useCarrito() {
+  const [ids, setIds] = useState(leerCarritoGuardado);
 
-const CATEGORIES = ["Todas","Chaquetas","Pantalones"];
+  useEffect(() => {
+    try { localStorage.setItem(CART_KEY, JSON.stringify(ids)); } catch (e) {}
+  }, [ids]);
+
+  const items = useMemo(
+    () => ids.map((id) => PRODUCTS.find((p) => p.id === id)).filter(Boolean),
+    [ids]
+  );
+
+  const subtotal = useMemo(() => items.reduce((s, p) => s + p.price, 0), [items]);
+
+  return {
+    ids,
+    items,
+    subtotal,
+    contiene: (id) => ids.includes(id),
+    agregar: (id) => setIds((prev) => (prev.includes(id) ? prev : [...prev, id])),
+    quitar: (id) => setIds((prev) => prev.filter((x) => x !== id)),
+    vaciar: () => setIds([]),
+  };
+}
 
 /* ── Componentes ── */
 function ProductCard({ product, onClick }) {
@@ -187,7 +318,17 @@ function ProductCard({ product, onClick }) {
   );
 }
 
-function Header({ onBack }) {
+const IconoBolsa = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+       aria-hidden="true" style={{ display:"block" }}>
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+    <path d="M3 6h18"/>
+    <path d="M16 10a4 4 0 0 1-8 0"/>
+  </svg>
+);
+
+function Header({ onBack, cartCount = 0, onOpenCart }) {
   const isMobile = useWindowWidth() < 640;
   return (
     <header style={{
@@ -203,13 +344,26 @@ function Header({ onBack }) {
         <div style={{cursor:"pointer"}} onClick={onBack || undefined}>
           <SVGLogo height={isMobile ? 56 : 92} />
         </div>
-        {!isMobile && (
-          <nav style={{ display:"flex", alignItems:"center", gap:"30px" }}>
-            <button className={`nav-link${!onBack?" active":""}`} onClick={onBack}>Catálogo</button>
-            <button className="nav-link">El taller</button>
-            <button className="nav-link">Contacto</button>
-          </nav>
-        )}
+        <div style={{ display:"flex", alignItems:"center", gap: isMobile ? "0" : "30px" }}>
+          {!isMobile && (
+            <nav style={{ display:"flex", alignItems:"center", gap:"30px" }}>
+              <button className={`nav-link${!onBack?" active":""}`} onClick={onBack}>Catálogo</button>
+              <button className="nav-link">El taller</button>
+              <button className="nav-link">Contacto</button>
+            </nav>
+          )}
+          {onOpenCart && (
+            <button
+              className="cart-button"
+              onClick={onOpenCart}
+              aria-label={cartCount === 1 ? "Ver carrito, 1 prenda" : `Ver carrito, ${cartCount} prendas`}
+            >
+              <IconoBolsa size={isMobile ? 22 : 20} />
+              {!isMobile && <span>Carrito</span>}
+              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );
@@ -263,7 +417,7 @@ function Footer() {
   );
 }
 
-function CatalogView({ onSelect }) {
+function CatalogView({ onSelect, cartCount, onOpenCart }) {
   const [activeFilter, setActiveFilter] = useState("Todas");
   const isMobile = useWindowWidth() < 640;
 
@@ -276,7 +430,7 @@ function CatalogView({ onSelect }) {
 
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
-      <Header />
+      <Header cartCount={cartCount} onOpenCart={onOpenCart} />
       <main style={{ flex:1, maxWidth:"var(--max-width)", margin:"0 auto", width:"100%", padding: isMobile ? "32px 16px 60px" : "60px 32px 80px" }}>
 
         {/* Hero */}
@@ -333,14 +487,15 @@ function CatalogView({ onSelect }) {
   );
 }
 
-function DetailView({ product, onBack }) {
+function DetailView({ product, onBack, carrito, onOpenCart }) {
   const isMobile = useWindowWidth() < 640;
   const [activeImage, setActiveImage] = useState(0);
   useEffect(() => { setActiveImage(0); }, [product.id]);
   const hasGallery = product.images.length > 1;
+  const enCarrito = carrito.contiene(product.id);
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
-      <Header onBack={onBack} />
+      <Header onBack={onBack} cartCount={carrito.items.length} onOpenCart={onOpenCart} />
       <main style={{ flex:1, maxWidth:"860px", margin:"0 auto", width:"100%", padding: isMobile ? "0 16px 60px" : "0 32px 80px" }}>
         <div style={{ padding:"20px 0" }}>
           <button onClick={onBack} style={{
@@ -399,18 +554,35 @@ function DetailView({ product, onBack }) {
               <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:"var(--text-muted)", lineHeight:1.6 }}>{CUIDADO}</p>
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:"10px", marginTop:"32px" }}>
-              <a href={`https://wa.me/56987362295?text=${encodeURIComponent("Hola, quiero consultar por: " + product.name + " (" + formatPrecio(product.price) + ")")}`} target="_blank" rel="noopener noreferrer" style={{
-                display:"flex", alignItems:"center", justifyContent:"center",
-                background:"var(--color-azul)", color:"#fff",
-                padding:"16px 24px",
-                fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"16px",
-              }}>Consultar por WhatsApp</a>
-              <a href="https://www.instagram.com/manoyaguja/" target="_blank" rel="noopener noreferrer" style={{
-                display:"flex", alignItems:"center", justifyContent:"center",
-                border:"2px solid var(--color-azul)", color:"var(--color-azul)",
-                padding:"14px 24px",
-                fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"16px",
-              }}>Ver en Instagram</a>
+              {!product.available ? (
+                <p style={{
+                  padding:"16px 24px", textAlign:"center",
+                  background:"var(--color-gris-muy-claro)", color:"var(--text-muted)",
+                  fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"16px",
+                }}>Esta prenda ya está reservada</p>
+              ) : enCarrito ? (
+                <button className="btn btn-primario" onClick={onOpenCart}>
+                  <IconoBolsa size={18} /> Ya está en tu carrito — ir a pagar
+                </button>
+              ) : (
+                <button className="btn btn-primario" onClick={() => carrito.agregar(product.id)}>
+                  Agregar al carrito · {formatPrecio(product.price)}
+                </button>
+              )}
+              <a
+                className="btn btn-secundario"
+                href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola, quiero consultar por: " + product.name + " (" + formatPrecio(product.price) + ")")}`}
+                target="_blank" rel="noopener noreferrer"
+              >Consultar por WhatsApp</a>
+              <a
+                href="https://www.instagram.com/manoyaguja/"
+                target="_blank" rel="noopener noreferrer"
+                style={{
+                  textAlign:"center", padding:"6px",
+                  fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px",
+                  color:"var(--text-muted)",
+                }}
+              >Ver en Instagram</a>
             </div>
           </div>
         </div>
@@ -420,11 +592,239 @@ function DetailView({ product, onBack }) {
   );
 }
 
+function CartView({ carrito, onBack }) {
+  const isMobile = useWindowWidth() < 640;
+  const [envioId, setEnvioId] = useState(ENVIOS[0].id);
+  const [cliente, setCliente] = useState({ nombre:"", email:"", telefono:"", direccion:"", comuna:"" });
+  const [error, setError] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+
+  const envio = ENVIOS.find((e) => e.id === envioId);
+  const total = carrito.subtotal + envio.price;
+
+  const campo = (k) => (e) => setCliente((c) => ({ ...c, [k]: e.target.value }));
+
+  const faltaAlgo =
+    !cliente.nombre.trim() ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email.trim()) ||
+    (envio.pideDireccion && (!cliente.direccion.trim() || !cliente.comuna.trim()));
+
+  async function pagar() {
+    setError(null);
+    setEnviando(true);
+    try {
+      const res = await fetch("/.netlify/functions/crear-preferencia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: carrito.ids.map((id) => ({ id })),
+          envio: envioId,
+          cliente,
+        }),
+      });
+
+      let datos = {};
+      try { datos = await res.json(); } catch (e) {}
+
+      if (!res.ok || !datos.init_point) {
+        setError(datos.error || "No pudimos abrir el pago. Escríbenos por WhatsApp y lo resolvemos.");
+        setEnviando(false);
+        return;
+      }
+      // Redirige al checkout de Mercado Pago.
+      window.location.href = datos.init_point;
+    } catch (e) {
+      setError("No hay conexión con el servidor de pagos. Revisa tu internet e intenta de nuevo.");
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      <Header onBack={onBack} cartCount={carrito.items.length} />
+      <main style={{ flex:1, maxWidth:"820px", margin:"0 auto", width:"100%", padding: isMobile ? "0 16px 60px" : "0 32px 80px" }}>
+
+        <div style={{ padding:"20px 0" }}>
+          <button onClick={onBack} style={{
+            fontFamily:"'Josefin Sans',sans-serif", fontWeight:600,
+            fontSize:"15px", color:"var(--text-muted)",
+            display:"flex", alignItems:"center", gap:"6px",
+          }}>← Seguir viendo prendas</button>
+        </div>
+
+        <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, fontSize: isMobile ? "1.9rem" : "2.4rem", lineHeight:1.1, marginBottom:"28px" }}>
+          Tu carrito
+        </h1>
+
+        {carrito.items.length === 0 ? (
+          <div style={{ padding:"48px 0", borderTop:"1px solid var(--border-subtle)" }}>
+            <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"16px", color:"var(--text-muted)", lineHeight:1.6, marginBottom:"24px" }}>
+              Todavía no agregaste ninguna prenda.
+            </p>
+            <button className="btn btn-primario" style={{ maxWidth:"280px" }} onClick={onBack}>
+              Ver el catálogo
+            </button>
+          </div>
+        ) : (
+          <React.Fragment>
+
+            {/* Prendas */}
+            <div style={{ borderTop:"1px solid var(--border-subtle)" }}>
+              {carrito.items.map((p) => (
+                <div key={p.id} style={{
+                  display:"flex", alignItems:"center", gap:"16px",
+                  padding:"16px 0", borderBottom:"1px solid var(--border-subtle)",
+                }}>
+                  <img src={p.images[0]} alt="" style={{
+                    width:"72px", aspectRatio:"3/4", objectFit:"cover",
+                    background:"var(--color-crema)", flexShrink:0,
+                  }} />
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"1.05rem" }}>{p.name}</p>
+                    <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:"var(--text-muted)", marginTop:"2px" }}>Pieza única</p>
+                  </div>
+                  <p style={{ fontFamily:"'DM Sans',sans-serif", fontWeight:500, fontSize:"1rem", whiteSpace:"nowrap" }}>
+                    {formatPrecio(p.price)}
+                  </p>
+                  <button
+                    onClick={() => carrito.quitar(p.id)}
+                    aria-label={`Quitar ${p.name} del carrito`}
+                    style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:"var(--color-rojo)", padding:"6px", flexShrink:0 }}
+                  >Quitar</button>
+                </div>
+              ))}
+            </div>
+
+            {/* Entrega */}
+            <h2 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"1.25rem", margin:"36px 0 14px" }}>
+              ¿Cómo lo recibes?
+            </h2>
+            <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
+              {ENVIOS.map((e) => (
+                <button
+                  key={e.id}
+                  className={`envio-opcion${e.id === envioId ? " activa" : ""}`}
+                  onClick={() => setEnvioId(e.id)}
+                >
+                  <span className="envio-radio" aria-hidden="true"></span>
+                  <span style={{ flex:1 }}>
+                    <span style={{ display:"flex", justifyContent:"space-between", gap:"12px", alignItems:"baseline" }}>
+                      <span style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px" }}>{e.label}</span>
+                      <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", fontWeight:500, whiteSpace:"nowrap" }}>
+                        {e.price > 0 ? formatPrecio(e.price) : e.id === "regiones" ? "Se cotiza" : "Gratis"}
+                      </span>
+                    </span>
+                    <span style={{ display:"block", fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:"var(--text-muted)", lineHeight:1.5, marginTop:"4px" }}>
+                      {e.detalle}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Datos */}
+            <h2 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"1.25rem", margin:"36px 0 14px" }}>
+              Tus datos
+            </h2>
+            <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:"16px" }}>
+              <div>
+                <label className="campo-label" htmlFor="nombre">Nombre y apellido</label>
+                <input className="campo" id="nombre" value={cliente.nombre} onChange={campo("nombre")} autoComplete="name" />
+              </div>
+              <div>
+                <label className="campo-label" htmlFor="email">Correo</label>
+                <input className="campo" id="email" type="email" value={cliente.email} onChange={campo("email")} autoComplete="email" placeholder="para el comprobante" />
+              </div>
+              <div>
+                <label className="campo-label" htmlFor="telefono">Teléfono <span style={{ color:"var(--text-muted)", fontWeight:400 }}>(opcional)</span></label>
+                <input className="campo" id="telefono" type="tel" value={cliente.telefono} onChange={campo("telefono")} autoComplete="tel" placeholder="+56 9 ..." />
+              </div>
+              {envio.pideDireccion && (
+                <React.Fragment>
+                  <div>
+                    <label className="campo-label" htmlFor="comuna">Comuna</label>
+                    <input className="campo" id="comuna" value={cliente.comuna} onChange={campo("comuna")} autoComplete="address-level2" />
+                  </div>
+                  <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
+                    <label className="campo-label" htmlFor="direccion">Dirección</label>
+                    <input className="campo" id="direccion" value={cliente.direccion} onChange={campo("direccion")} autoComplete="street-address" placeholder="Calle, número, depto" />
+                  </div>
+                </React.Fragment>
+              )}
+            </div>
+
+            {/* Total */}
+            <div style={{ borderTop:"1px solid var(--border-subtle)", marginTop:"36px", paddingTop:"20px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", fontFamily:"'DM Sans',sans-serif", fontSize:"15px", color:"var(--text-secondary)", marginBottom:"8px" }}>
+                <span>Prendas ({carrito.items.length})</span>
+                <span>{formatPrecio(carrito.subtotal)}</span>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", fontFamily:"'DM Sans',sans-serif", fontSize:"15px", color:"var(--text-secondary)", marginBottom:"14px" }}>
+                <span>{envio.label}</span>
+                <span>{envio.price > 0 ? formatPrecio(envio.price) : envio.id === "regiones" ? "Se cotiza aparte" : "Gratis"}</span>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", borderTop:"1px solid var(--border-subtle)", paddingTop:"14px" }}>
+                <span style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"1.1rem" }}>Total a pagar ahora</span>
+                <span style={{ fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:"1.5rem" }}>{formatPrecio(total)}</span>
+              </div>
+              {envio.id === "regiones" && (
+                <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:"var(--text-muted)", lineHeight:1.55, marginTop:"10px" }}>
+                  El envío a regiones no está incluido en este monto. Te escribimos por WhatsApp con el costo antes de despachar.
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <p className="aviso-error" style={{ marginTop:"20px" }}>{error}</p>
+            )}
+
+            <div style={{ marginTop:"24px" }}>
+              <button className="btn btn-primario" onClick={pagar} disabled={faltaAlgo || enviando}>
+                {enviando ? "Abriendo Mercado Pago…" : "Pagar con Mercado Pago"}
+              </button>
+              <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:"var(--text-muted)", lineHeight:1.55, marginTop:"12px", textAlign:"center" }}>
+                Te llevamos al sitio de Mercado Pago para pagar. Puedes usar tarjeta de crédito, débito o tu saldo. Nosotros no guardamos los datos de tu tarjeta.
+              </p>
+            </div>
+
+          </React.Fragment>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
 function App() {
+  const carrito = useCarrito();
   const [selected, setSelected] = useState(null);
-  return selected
-    ? <DetailView product={selected} onBack={() => setSelected(null)} />
-    : <CatalogView onSelect={setSelected} />;
+  const [enCarrito, setEnCarrito] = useState(false);
+
+  // Al cambiar de vista se vuelve arriba, si no la pagina queda a media altura.
+  useEffect(() => { window.scrollTo(0, 0); }, [selected, enCarrito]);
+
+  const abrirCarrito = () => { setEnCarrito(true); setSelected(null); };
+
+  if (enCarrito) {
+    return <CartView carrito={carrito} onBack={() => setEnCarrito(false)} />;
+  }
+  if (selected) {
+    return (
+      <DetailView
+        product={selected}
+        onBack={() => setSelected(null)}
+        carrito={carrito}
+        onOpenCart={abrirCarrito}
+      />
+    );
+  }
+  return (
+    <CatalogView
+      onSelect={setSelected}
+      cartCount={carrito.items.length}
+      onOpenCart={abrirCarrito}
+    />
+  );
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);

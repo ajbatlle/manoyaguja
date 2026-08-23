@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mano y Aguja — Tu pedido</title>
+<link rel="icon" type="image/svg+xml" href="assets/elements/elemento1.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-azul:  #364A8A;
+  --color-rojo:  #DC4A3C;
+  --color-crema: #EEECE7;
+  --color-negro: #111111;
+  --text-secondary: #3D3D3A;
+  --text-muted: #76756E;
+  --border-subtle: #E5E3DE;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #fff;
+  color: var(--color-negro);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 24px 16px;
+}
+header img { height: 56px; margin: 0 auto; display: block; }
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 56px 20px 80px;
+  text-align: center;
+}
+.marca { width: 64px; margin: 0 auto 28px; }
+h1 {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.7rem, 6vw, 2.4rem);
+  line-height: 1.1;
+}
+p.lead {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-top: 18px;
+}
+.ref {
+  display: inline-block;
+  margin-top: 26px;
+  padding: 10px 18px;
+  background: var(--color-crema);
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+.acciones { display: flex; flex-direction: column; gap: 12px; margin-top: 40px; }
+.btn {
+  display: block;
+  padding: 16px 24px;
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+}
+.btn-primario { background: var(--color-azul); color: #fff; }
+.btn-secundario { border: 2px solid var(--color-azul); color: var(--color-azul); padding: 14px 24px; }
+footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="assets/logos/logo-color-ma.svg" alt="Mano y Aguja">
+</header>
+
+<main>
+  <div class="marca" id="marca"></div>
+  <h1 id="titulo">Revisando tu pago…</h1>
+  <p class="lead" id="mensaje"></p>
+  <div id="refBox" hidden><span class="ref" id="ref"></span></div>
+  <div class="acciones">
+    <a class="btn btn-primario" id="waLink" href="#">Escribirnos por WhatsApp</a>
+    <a class="btn btn-secundario" href="/">Volver al catálogo</a>
+  </div>
+</main>
+
+<footer>Mano y Aguja · Taller textil de producción local</footer>
+
+<script>
+  var WHATSAPP = "56987362295";
+
+  var params = new URLSearchParams(window.location.search);
+  // Mercado Pago devuelve el resultado en collection_status o status,
+  // segun por donde haya pasado el pago.
+  var estado = params.get("collection_status") || params.get("status") || "desconocido";
+  var referencia = params.get("external_reference") || "";
+
+  var ESTADOS = {
+    approved: {
+      color: "#364A8A",
+      titulo: "¡Gracias por tu compra!",
+      mensaje: "Recibimos tu pago. Te vamos a escribir por WhatsApp para coordinar la entrega. Si elegiste despacho a regiones, ahí te contamos el costo del envío.",
+      wa: "Hola, acabo de hacer una compra"
+    },
+    pending: {
+      color: "#D4B232",
+      titulo: "Tu pago está en proceso",
+      mensaje: "Mercado Pago todavía no confirma la transacción. Puede tardar un poco. Apenas se acredite, te escribimos para coordinar la entrega.",
+      wa: "Hola, hice una compra y el pago quedó pendiente"
+    },
+    in_process: {
+      color: "#D4B232",
+      titulo: "Tu pago está en proceso",
+      mensaje: "Mercado Pago todavía no confirma la transacción. Puede tardar un poco. Apenas se acredite, te escribimos para coordinar la entrega.",
+      wa: "Hola, hice una compra y el pago quedó pendiente"
+    },
+    rejected: {
+      color: "#DC4A3C",
+      titulo: "El pago no se pudo completar",
+      mensaje: "Mercado Pago rechazó la transacción y no te cobramos nada. Puedes intentar con otro medio de pago, o escribirnos y lo resolvemos juntos.",
+      wa: "Hola, intenté pagar en la web y el pago fue rechazado"
+    },
+    failure: {
+      color: "#DC4A3C",
+      titulo: "El pago no se pudo completar",
+      mensaje: "Mercado Pago rechazó la transacción y no te cobramos nada. Puedes intentar con otro medio de pago, o escribirnos y lo resolvemos juntos.",
+      wa: "Hola, intenté pagar en la web y el pago fue rechazado"
+    },
+    desconocido: {
+      color: "#76756E",
+      titulo: "No pudimos leer el resultado",
+      mensaje: "Llegaste a esta página sin información del pago. Si hiciste una compra y tienes dudas, escríbenos y lo revisamos.",
+      wa: "Hola, tengo una duda sobre una compra en la web"
+    }
+  };
+
+  var info = ESTADOS[estado] || ESTADOS.desconocido;
+
+  // Si el pago salio bien, el carrito ya no sirve. Si fallo se conserva,
+  // asi el cliente puede reintentar sin volver a armarlo.
+  if (estado === "approved") {
+    try { localStorage.removeItem("manoyaguja:carrito"); } catch (e) {}
+  }
+
+  document.getElementById("titulo").textContent = info.titulo;
+  document.getElementById("mensaje").textContent = info.mensaje;
+  document.getElementById("marca").innerHTML =
+    '<svg viewBox="0 0 36.31 38.44" xmlns="http://www.w3.org/2000/svg" width="64" height="68">' +
+    '<path fill="' + info.color + '" d="M36.3,23.4c0-.4-.02-.8-.04-1.2,0-.52-.02-1.03-.07-1.54-.12-1.47-.37-2.92-.63-4.37-.23-2.02-.63-4-1.3-5.92-1.23-3.43-4.59-7.43-7.96-8.91-1.77-.71-4.01-1.18-6.29-1.37-2.09-.17-4.22-.11-6.07.23-.16.03-.31.06-.46.09-.3.06-.59.14-.87.22-.69.25-1.38.52-2.06.82-2.94,1.29-5.72,3.08-7.53,5.75C.93,10.37-.1,13.65.05,17.46h0c-.4,5.33,1.53,12.51,5.23,16.47,1.85,1.71,4.19,2.82,6.61,3.54.53.16,1.06.3,1.59.42.1.02.21.05.31.07,3.19.64,6.53.62,9.74.11,2.14-.54,4.32-1.09,6.36-1.92,2.08-1.12,3.63-3.04,4.9-4.99,1.3-2.36,1.55-5.08,1.51-7.74ZM33.04,30.31c-1.17,1.69-2.51,3.44-4.43,4.29-1.63.5-3.26,1-4.9,1.44-3.36.65-6.89.64-10.23-.14-.36-.09-.73-.18-1.09-.29-.19-.06-.38-.13-.58-.2-1.98-.7-3.95-1.61-5.43-3.12-3.08-3.81-4.42-8.92-4.44-13.76,0-2.93.11-5.96,1.69-8.53,1.35-3.04,4.03-5.1,6.99-6.49.94-.44,1.9-.81,2.86-1.13.01,0,.02,0,.03-.01,2.26-.57,4.6-.55,6.9-.26,3.09.2,6.29,1.07,8.4,3.48,2.76,2.8,4.06,5.55,4.63,9.44.31,2.48.92,4.91.9,7.42.1,2.66.04,5.48-1.3,7.85Z"/>' +
+    '</svg>';
+
+  if (referencia) {
+    document.getElementById("ref").textContent = "Pedido " + referencia;
+    document.getElementById("refBox").hidden = false;
+  }
+
+  var texto = info.wa + (referencia ? " (pedido " + referencia + ")" : "");
+  document.getElementById("waLink").href =
+    "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(texto);
+</script>
+
+</body>
+</html>
