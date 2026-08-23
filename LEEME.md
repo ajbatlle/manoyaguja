@@ -59,7 +59,7 @@ git add . && git commit -m "actualizo catálogo" && git push
 Cada prenda es única, así que el sistema lleva tres estados:
 
 - **libre** — se puede comprar.
-- **reservada** — alguien está pagándola en este momento. Dura 45 minutos.
+- **reservada** — alguien está pagándola en este momento. Dura 30 minutos.
   Si no completa el pago, vuelve sola al catálogo.
 - **vendida** — el pago se aprobó. Es definitivo.
 
