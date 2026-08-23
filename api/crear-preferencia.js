@@ -11,6 +11,7 @@
 */
 
 const { PRODUCTS, ENVIOS, MONEDA } = require("../productos.js");
+const stock = require("../lib/stock.js");
 
 const MP_API = "https://api.mercadopago.com/checkout/preferences";
 
@@ -128,6 +129,32 @@ module.exports = async (req, res) => {
 
   const referencia = "MA-" + Date.now().toString(36).toUpperCase();
 
+  // --- Reserva del stock -------------------------------------------------
+  // Antes de mandar a nadie a pagar, se apartan las prendas. Si otra persona
+  // esta pagando la misma, aca se corta. Si el control de stock no responde,
+  // NO se vende: es preferible perder una venta a vender dos veces la misma
+  // prenda unica.
+  const idsPrendas = Array.from(vistos);
+  let reserva;
+  try {
+    reserva = await stock.reservar(idsPrendas, referencia);
+  } catch (e) {
+    console.error("No se pudo reservar el stock:", e);
+    return res.status(503).json({
+      error: "No pudimos confirmar la disponibilidad en este momento. Intenta de nuevo en un minuto."
+    });
+  }
+
+  if (!reserva.ok) {
+    const ocupada = PRODUCTS.find((p) => p.id === reserva.ocupada);
+    return res.status(409).json({
+      error: ocupada
+        ? `Alguien se adelanto con "${ocupada.name}". Es una pieza unica, asi que quedo fuera de tu carrito.`
+        : "Una de las prendas ya no esta disponible.",
+      prendaOcupada: reserva.ocupada
+    });
+  }
+
   // Resumen legible que queda pegado al pago en el panel de Mercado Pago.
   // Sin base de datos propia, este es el lugar donde el taller ve que pidieron
   // y a donde hay que mandarlo.
@@ -169,7 +196,11 @@ module.exports = async (req, res) => {
       success: sitio + "/gracias.html",
       pending: sitio + "/gracias.html",
       failure: sitio + "/gracias.html"
-    }
+    },
+    // Mercado Pago avisa aca cuando el pago cambia de estado. Es lo unico
+    // que marca una prenda como vendida de forma definitiva: el retorno del
+    // navegador no sirve para eso, porque lo puede falsear cualquiera.
+    notification_url: sitio + "/api/webhook-mercadopago"
   };
 
   // auto_return solo funciona con URLs https. En desarrollo local se omite.
@@ -194,6 +225,8 @@ module.exports = async (req, res) => {
       // El detalle del error queda en los logs de Vercel, no se le muestra
       // al cliente: puede contener informacion de la cuenta.
       console.error("Mercado Pago rechazo la preferencia:", respuesta.status, datos);
+      // Si no hay cobro, las prendas no pueden quedar apartadas.
+      await stock.soltar(idsPrendas, referencia).catch(() => {});
       return res.status(502).json({ error: "Mercado Pago no pudo generar el cobro. Intenta de nuevo en un momento." });
     }
 
@@ -203,6 +236,7 @@ module.exports = async (req, res) => {
     });
   } catch (e) {
     console.error("Error llamando a Mercado Pago:", e);
+    await stock.soltar(idsPrendas, referencia).catch(() => {});
     return res.status(502).json({ error: "No pudimos conectar con Mercado Pago. Intenta de nuevo." });
   }
 };

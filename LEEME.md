@@ -9,7 +9,10 @@ Sitio: https://www.tallermanoyaguja.com
 | `index.html` | Todo el catálogo y el carrito. Es una sola página. |
 | `productos.js` | **Las prendas y los precios.** Único archivo que hay que tocar para el día a día. |
 | `gracias.html` | La página a la que vuelve el cliente después de pagar. |
-| `api/crear-preferencia.js` | Le pide a Mercado Pago el cobro. No se toca. |
+| `api/crear-preferencia.js` | Le pide a Mercado Pago el cobro y aparta la prenda. No se toca. |
+| `api/webhook-mercadopago.js` | Recibe el aviso de pago aprobado y marca la prenda vendida. No se toca. |
+| `api/estado-stock.js` | Le dice al catálogo qué prendas ya no están. No se toca. |
+| `lib/stock.js` | La lógica de reservas y ventas. No se toca. |
 
 ## Tareas del día a día
 
@@ -18,15 +21,17 @@ actualiza solo un par de minutos después.
 
 ### Marcar una prenda como vendida
 
+**Las ventas por la web se marcan solas.** Esto es solo para prendas que
+vendiste en persona, regalaste o mandaste a arreglar.
+
 Buscar la prenda y cambiar `available:true` por `available:false`.
 
 ```js
 { id:2, name:"Chaqueta 02", price:PRECIO_CHAQUETA, category:"Chaquetas", available:false, images:[...] },
 ```
 
-Queda visible en el catálogo con el cartel "Reservada", pero ya no se puede
-agregar al carrito ni pagar. El servidor también la rechaza, así que no hay
-riesgo de vender dos veces la misma prenda.
+Queda visible en el catálogo con el cartel "Vendida", pero ya no se puede
+agregar al carrito ni pagar.
 
 ### Cambiar un precio
 
@@ -49,6 +54,36 @@ En la lista `ENVIOS`, el `price` de la opción `santiago`.
 git add . && git commit -m "actualizo catálogo" && git push
 ```
 
+## Cómo se evita vender dos veces la misma prenda
+
+Cada prenda es única, así que el sistema lleva tres estados:
+
+- **libre** — se puede comprar.
+- **reservada** — alguien está pagándola en este momento. Dura 45 minutos.
+  Si no completa el pago, vuelve sola al catálogo.
+- **vendida** — el pago se aprobó. Es definitivo.
+
+La reserva se toma en el instante en que alguien aprieta *Pagar*, antes de
+mandarlo a Mercado Pago. Si dos personas aprietan el botón en el mismo
+segundo, la base de datos le concede la prenda a una sola y a la otra le
+responde que ya no está. No hay empate posible.
+
+Lo que pasa a *vendida* no es el regreso del comprador al sitio, sino el aviso
+que Mercado Pago le manda al servidor cuando el pago se aprueba. Esa
+diferencia importa: la página de gracias la puede abrir cualquiera escribiendo
+la dirección a mano, así que confiar en ella permitiría vaciar el catálogo sin
+pagar un peso.
+
+**Si la base de datos no responde, el sitio no vende.** Prefiere perder una
+venta antes que arriesgar vender dos veces la misma prenda.
+
+### Devolver una prenda al catálogo después de una devolución
+
+Si le devuelves el dinero a alguien, la prenda **no vuelve sola** al catálogo:
+queda marcada como vendida. Hoy eso se corrige a mano en la base de datos y no
+hay una pantalla para hacerlo. Si te pasa, pídeme que lo haga o que arme una
+forma de hacerlo tú.
+
 ## Por qué los precios están en un solo archivo
 
 `productos.js` lo leen los dos lados: el navegador para mostrar el catálogo, y
@@ -65,10 +100,21 @@ estarlo nunca: cualquiera que lo tenga puede cobrar a nombre del taller.
 
 Vive como variable de entorno en el panel de Vercel:
 
-    Settings → Environment Variables → MP_ACCESS_TOKEN
+    Environment Variables → MP_ACCESS_TOKEN
 
 Si alguna vez se filtra, hay que regenerarlo desde el panel de desarrolladores
 de Mercado Pago y actualizarlo en Vercel.
+
+## Variables de entorno que necesita el sitio
+
+| Variable | De dónde sale |
+|---|---|
+| `MP_ACCESS_TOKEN` | Mercado Pago → Tus integraciones → tu aplicación → Credenciales |
+| `MP_WEBHOOK_SECRET` | Mercado Pago → tu aplicación → Webhooks → clave secreta |
+| `KV_REST_API_URL` | La pone sola la base de datos al agregarla en Vercel |
+| `KV_REST_API_TOKEN` | Idem |
+
+Ninguna de estas va en el repositorio.
 
 ## Hosting
 

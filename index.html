@@ -279,7 +279,8 @@ function useCarrito() {
 }
 
 /* ── Componentes ── */
-function ProductCard({ product, onClick }) {
+function ProductCard({ product, estado = "disponible", onClick }) {
+  const disponible = estado === "disponible";
   return (
     <article className="product-card" onClick={onClick}>
       <div style={{ position:"relative", aspectRatio:"3/4", background:"var(--color-crema)", overflow:"hidden" }}>
@@ -289,19 +290,19 @@ function ProductCard({ product, onClick }) {
           style={{
             width:"100%", height:"100%",
             objectFit:"cover", objectPosition:"center", display:"block",
-            opacity: product.available ? 1 : 0.5,
-            filter: product.available ? "none" : "grayscale(40%)",
+            opacity: disponible ? 1 : 0.5,
+            filter: disponible ? "none" : "grayscale(40%)",
           }}
         />
-        {!product.available && (
+        {!disponible && (
           <div style={{
             position:"absolute", bottom:0, left:0, right:0,
-            background:"var(--color-gris-muy-claro)",
+            background: estado === "vendida" ? "var(--color-gris-muy-claro)" : "var(--color-amarillo-fondo)",
             padding:"6px 12px",
             fontFamily:"'Josefin Sans',sans-serif", fontWeight:600,
             fontSize:"13px",
             color:"var(--text-muted)", textAlign:"center",
-          }}>Reservada</div>
+          }}>{estado === "vendida" ? "Vendida" : "Reservada"}</div>
         )}
       </div>
       <div style={{ padding:"20px 20px 24px", display:"flex", flexDirection:"column", gap:"6px" }}>
@@ -417,7 +418,7 @@ function Footer() {
   );
 }
 
-function CatalogView({ onSelect, cartCount, onOpenCart }) {
+function CatalogView({ onSelect, cartCount, onOpenCart, estadoDe }) {
   const [activeFilter, setActiveFilter] = useState("Todas");
   const isMobile = useWindowWidth() < 640;
 
@@ -426,7 +427,7 @@ function CatalogView({ onSelect, cartCount, onOpenCart }) {
     return PRODUCTS.filter(p => p.category === activeFilter);
   }, [activeFilter]);
 
-  const availableCount = PRODUCTS.filter(p => p.available).length;
+  const availableCount = PRODUCTS.filter(p => estadoDe(p) === "disponible").length;
 
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
@@ -473,7 +474,9 @@ function CatalogView({ onSelect, cartCount, onOpenCart }) {
           gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
           gap: isMobile ? "16px" : "24px",
         }}>
-          {filtered.map(p => <ProductCard key={p.id} product={p} onClick={() => onSelect(p)} />)}
+          {filtered.map(p => (
+            <ProductCard key={p.id} product={p} estado={estadoDe(p)} onClick={() => onSelect(p)} />
+          ))}
         </div>
 
         {filtered.length === 0 && (
@@ -487,12 +490,13 @@ function CatalogView({ onSelect, cartCount, onOpenCart }) {
   );
 }
 
-function DetailView({ product, onBack, carrito, onOpenCart }) {
+function DetailView({ product, onBack, carrito, onOpenCart, estadoDe }) {
   const isMobile = useWindowWidth() < 640;
   const [activeImage, setActiveImage] = useState(0);
   useEffect(() => { setActiveImage(0); }, [product.id]);
   const hasGallery = product.images.length > 1;
   const enCarrito = carrito.contiene(product.id);
+  const estado = estadoDe(product);
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
       <Header onBack={onBack} cartCount={carrito.items.length} onOpenCart={onOpenCart} />
@@ -554,12 +558,21 @@ function DetailView({ product, onBack, carrito, onOpenCart }) {
               <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:"var(--text-muted)", lineHeight:1.6 }}>{CUIDADO}</p>
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:"10px", marginTop:"32px" }}>
-              {!product.available ? (
-                <p style={{
+              {estado !== "disponible" ? (
+                <div style={{
                   padding:"16px 24px", textAlign:"center",
-                  background:"var(--color-gris-muy-claro)", color:"var(--text-muted)",
-                  fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"16px",
-                }}>Esta prenda ya está reservada</p>
+                  background: estado === "vendida" ? "var(--color-gris-muy-claro)" : "var(--color-amarillo-fondo)",
+                  color:"var(--text-secondary)",
+                }}>
+                  <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"16px" }}>
+                    {estado === "vendida" ? "Esta prenda ya se vendió" : "Alguien la está comprando ahora"}
+                  </p>
+                  <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", lineHeight:1.55, marginTop:"6px", color:"var(--text-muted)" }}>
+                    {estado === "vendida"
+                      ? "Era una pieza única. Escríbenos si quieres algo parecido."
+                      : "Si no completa el pago, vuelve a estar disponible en un rato."}
+                  </p>
+                </div>
               ) : enCarrito ? (
                 <button className="btn btn-primario" onClick={onOpenCart}>
                   <IconoBolsa size={18} /> Ya está en tu carrito — ir a pagar
@@ -592,12 +605,26 @@ function DetailView({ product, onBack, carrito, onOpenCart }) {
   );
 }
 
-function CartView({ carrito, onBack }) {
+function CartView({ carrito, onBack, estadoDe, refrescarStock }) {
   const isMobile = useWindowWidth() < 640;
   const [envioId, setEnvioId] = useState(ENVIOS[0].id);
   const [cliente, setCliente] = useState({ nombre:"", email:"", telefono:"", direccion:"", comuna:"" });
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
+
+  // Si una prenda del carrito se vendio mientras la persona decidia, se saca
+  // sola y se le avisa. Las "reservadas" se dejan: puede ser su propia
+  // reserva de un intento anterior, y el servidor decide al pagar.
+  useEffect(() => {
+    const vendidas = carrito.items.filter((p) => estadoDe(p) === "vendida");
+    if (vendidas.length === 0) return;
+    vendidas.forEach((p) => carrito.quitar(p.id));
+    setError(
+      vendidas.length === 1
+        ? `Sacamos "${vendidas[0].name}" de tu carrito: se vendió mientras mirabas. Era una pieza única.`
+        : "Sacamos de tu carrito algunas prendas que se vendieron mientras mirabas."
+    );
+  }, [carrito.items, estadoDe]);
 
   const envio = ENVIOS.find((e) => e.id === envioId);
   const total = carrito.subtotal + envio.price;
@@ -628,6 +655,10 @@ function CartView({ carrito, onBack }) {
 
       if (!res.ok || !datos.init_point) {
         setError(datos.error || "No pudimos abrir el pago. Escríbenos por WhatsApp y lo resolvemos.");
+        // Si el servidor dijo que una prenda ya la tomo otra persona, se saca
+        // del carrito para que pueda pagar el resto sin volver a chocar.
+        if (datos.prendaOcupada) carrito.quitar(datos.prendaOcupada);
+        refrescarStock();
         setEnviando(false);
         return;
       }
@@ -795,18 +826,65 @@ function CartView({ carrito, onBack }) {
   );
 }
 
+/* ── Stock en vivo ──
+   El servidor sabe que prendas ya se vendieron o estan siendo pagadas ahora.
+   Esto es solo para mostrarlo: quien decide de verdad si se puede comprar es
+   el servidor al reservar, y eso no se puede saltar desde el navegador. */
+function useStock() {
+  const [stock, setStock] = useState({ vendidas: [], reservadas: [] });
+
+  const refrescar = React.useCallback(() => {
+    fetch("/api/estado-stock")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        setStock({ vendidas: d.vendidas || [], reservadas: d.reservadas || [] });
+      })
+      .catch(() => {
+        // Sin conexion se muestra el catalogo completo. No es riesgoso: si la
+        // prenda ya no esta, el pago se rechaza al intentar reservarla.
+      });
+  }, []);
+
+  useEffect(() => { refrescar(); }, [refrescar]);
+
+  // Al volver a la pestaña (por ejemplo despues de pagar) se vuelve a mirar.
+  useEffect(() => {
+    const alVolver = () => { if (!document.hidden) refrescar(); };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => document.removeEventListener("visibilitychange", alVolver);
+  }, [refrescar]);
+
+  const estadoDe = React.useCallback((producto) => {
+    if (!producto.available) return "vendida";
+    if (stock.vendidas.includes(producto.id)) return "vendida";
+    if (stock.reservadas.includes(producto.id)) return "reservada";
+    return "disponible";
+  }, [stock]);
+
+  return { estadoDe, refrescar };
+}
+
 function App() {
   const carrito = useCarrito();
+  const { estadoDe, refrescar } = useStock();
   const [selected, setSelected] = useState(null);
   const [enCarrito, setEnCarrito] = useState(false);
 
   // Al cambiar de vista se vuelve arriba, si no la pagina queda a media altura.
   useEffect(() => { window.scrollTo(0, 0); }, [selected, enCarrito]);
 
-  const abrirCarrito = () => { setEnCarrito(true); setSelected(null); };
+  const abrirCarrito = () => { setEnCarrito(true); setSelected(null); refrescar(); };
 
   if (enCarrito) {
-    return <CartView carrito={carrito} onBack={() => setEnCarrito(false)} />;
+    return (
+      <CartView
+        carrito={carrito}
+        onBack={() => setEnCarrito(false)}
+        estadoDe={estadoDe}
+        refrescarStock={refrescar}
+      />
+    );
   }
   if (selected) {
     return (
@@ -815,6 +893,7 @@ function App() {
         onBack={() => setSelected(null)}
         carrito={carrito}
         onOpenCart={abrirCarrito}
+        estadoDe={estadoDe}
       />
     );
   }
@@ -823,6 +902,7 @@ function App() {
       onSelect={setSelected}
       cartCount={carrito.items.length}
       onOpenCart={abrirCarrito}
+      estadoDe={estadoDe}
     />
   );
 }
