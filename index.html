@@ -73,6 +73,10 @@ a { color: inherit; text-decoration: none; }
 .filter-tab:hover { color: var(--text-primary); }
 .filter-tab.active { color: var(--text-primary); border-bottom-color: var(--color-negro); }
 
+.foto-carrusel { animation: aparecer .6s ease; }
+@keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .foto-carrusel { animation: none; } }
+
 .product-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -313,6 +317,7 @@ function ProductCard({ product, estado = "disponible", onClick }) {
         }}>{product.name}</p>
         <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", fontWeight:500, color:"var(--text-secondary)", lineHeight:1.5 }}>
           {formatPrecio(product.price)}
+          <span style={{ color:"var(--text-muted)", fontWeight:400 }}> · Talla {product.talla}</span>
         </p>
       </div>
     </article>
@@ -329,7 +334,12 @@ const IconoBolsa = ({ size = 20 }) => (
   </svg>
 );
 
-function Header({ onBack, cartCount = 0, onOpenCart }) {
+/* Baja hasta una seccion de la pagina actual (el contacto esta en el pie). */
+function irA(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+}
+
+function Header({ onBack, cartCount = 0, onOpenCart, seccion }) {
   const isMobile = useWindowWidth() < 640;
   return (
     <header style={{
@@ -349,8 +359,8 @@ function Header({ onBack, cartCount = 0, onOpenCart }) {
           {!isMobile && (
             <nav style={{ display:"flex", alignItems:"center", gap:"30px" }}>
               <button className={`nav-link${!onBack?" active":""}`} onClick={onBack}>Catálogo</button>
-              <button className="nav-link">El taller</button>
-              <button className="nav-link">Contacto</button>
+              <button className={`nav-link${seccion==="taller"?" active":""}`} onClick={() => { location.hash = "taller"; }}>El taller</button>
+              <button className="nav-link" onClick={() => irA("contacto")}>Contacto</button>
             </nav>
           )}
           {onOpenCart && (
@@ -373,7 +383,7 @@ function Header({ onBack, cartCount = 0, onOpenCart }) {
 function Footer() {
   const isMobile = useWindowWidth() < 640;
   return (
-    <footer style={{
+    <footer id="contacto" style={{
       background:"#E8E5DF",
       borderTop:"1px solid var(--border-subtle)",
       padding: isMobile ? "32px 16px" : "48px 32px",
@@ -392,7 +402,7 @@ function Footer() {
             style={{ height:"22px", display:"block", marginBottom:"14px" }}
           />
           <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:"var(--text-secondary)", lineHeight:1.6 }}>
-            Taller textil de producción local y pequeña escala. Cada prenda es única.
+            Taller textil en Providencia. Ropa de niños, una prenda por modelo.
           </p>
         </div>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"16px" }}>
@@ -418,6 +428,80 @@ function Footer() {
   );
 }
 
+const FOTOS_TALLER = Array.from({ length: 30 }, (_, i) =>
+  `assets/taller/taller-${String(i + 1).padStart(2, "0")}.webp`);
+
+function Carrusel({ fotos, cadaMs = 2500 }) {
+  const [i, setI] = useState(0);
+  const [pausado, setPausado] = useState(false);
+  const sinMovimiento = useMemo(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
+  const siguiente = () => setI((x) => (x + 1) % fotos.length);
+
+  useEffect(() => {
+    if (pausado || sinMovimiento) return;
+    const t = setTimeout(siguiente, cadaMs);
+    return () => clearTimeout(t);
+  }, [i, pausado, sinMovimiento]);
+
+  // Deja cargada la siguiente para que el cambio no parpadee.
+  useEffect(() => { new Image().src = fotos[(i + 1) % fotos.length]; }, [i]);
+
+  return (
+    <div
+      onMouseEnter={() => setPausado(true)} onMouseLeave={() => setPausado(false)}
+      aria-roledescription="carrusel" aria-label="Fotos del taller"
+    >
+      <div style={{ position:"relative", aspectRatio:"3/4", background:"var(--color-crema)", overflow:"hidden", borderRadius:"16px" }}>
+        <img
+          key={i} src={fotos[i]} alt={`Trabajo en el taller, foto ${i + 1} de ${fotos.length}`}
+          className="foto-carrusel"
+          style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function TallerView({ onBack, cartCount, onOpenCart }) {
+  const isMobile = useWindowWidth() < 640;
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      <Header onBack={onBack} cartCount={cartCount} onOpenCart={onOpenCart} seccion="taller" />
+      <main style={{
+        flex:1, maxWidth:"var(--max-width)", margin:"0 auto", width:"100%",
+        padding: isMobile ? "32px 16px 60px" : "60px 32px 80px",
+        display:"grid",
+        gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 480px) 380px",
+        justifyContent:"start",
+        gap: isMobile ? "28px" : "56px",
+        alignItems:"start",
+      }}>
+      <div>
+        <p style={{ display:"flex", alignItems:"center", gap:"12px", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"16px", color:"var(--text-muted)", margin:0 }}>
+          <SVGOval size={16} />
+          El taller
+        </p>
+        <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, fontSize: isMobile ? "1.8rem" : "2.4rem", lineHeight:1.1, margin:"18px 0 20px" }}>
+          Somos un taller textil
+        </h1>
+        {[
+          "Mano y Aguja empezó en Barcelona en 2022, con una máquina de coser pequeña y básica, comprada en Amazon. Desde 2024 trabajamos en Santiago y hacemos ropa de niños.",
+          "Compramos las telas en el barrio Rosas y aprovechamos los retazos. Cada prenda parte de un molde, se corta con tijera y se cose con dos máquinas. Hacemos pocas y ninguna se repite.",
+          "Bordamos y tejemos para probar con las telas. Creemos que un taller debe ser un lugar para aprender y compartir lo que se aprende.",
+        ].map((t, i) => (
+          <p key={i} style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"16px", lineHeight:1.7, color:"var(--text-secondary)", margin: i ? "16px 0 0" : 0 }}>
+            {t}
+          </p>
+        ))}
+      </div>
+      <Carrusel fotos={FOTOS_TALLER} />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
 function CatalogView({ onSelect, cartCount, onOpenCart, estadoDe }) {
   const [activeFilter, setActiveFilter] = useState("Todas");
   const isMobile = useWindowWidth() < 640;
@@ -428,6 +512,12 @@ function CatalogView({ onSelect, cartCount, onOpenCart, estadoDe }) {
   }, [activeFilter]);
 
   const availableCount = PRODUCTS.filter(p => estadoDe(p) === "disponible").length;
+
+  const vendidas = filtered.filter(p => estadoDe(p) === "vendida");
+  const enVenta = filtered.filter(p => estadoDe(p) !== "vendida");
+  const tallas = [...new Set(enVenta.map(p => p.talla))].sort((a, b) => a - b);
+  const grupos = tallas.map(t => ({ titulo: `Talla ${t}`, items: enVenta.filter(p => p.talla === t) }));
+  if (vendidas.length) grupos.push({ titulo: "Vendidas", items: vendidas, vendidas: true });
 
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
@@ -445,18 +535,18 @@ function CatalogView({ onSelect, cartCount, onOpenCart, estadoDe }) {
               {availableCount} prendas<br/>disponibles
             </h1>
           </div>
-          {!isMobile && (
-            <div style={{ maxWidth:"360px" }}>
+          <div style={{ maxWidth:"360px" }}>
+            {!isMobile && (
               <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"16px" }}>
                 <SVGOval size={34} />
                 <SVGBlob size={38} color="#364A8A" />
                 <SVGBlob size={36} color="#DC4A3C" />
               </div>
-              <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", lineHeight:1.7, color:"var(--text-secondary)", margin:0 }}>
-                Producción basada en stock disponible. Cada prenda es única.
-              </p>
-            </div>
-          )}
+            )}
+            <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", lineHeight:1.7, color:"var(--text-secondary)", margin:0 }}>
+              Ropa de niños que hacemos en casa. Cada prenda es irrepetible.
+            </p>
+          </div>
         </div>
 
         {/* Filtros */}
@@ -468,16 +558,31 @@ function CatalogView({ onSelect, cartCount, onOpenCart, estadoDe }) {
           ))}
         </div>
 
-        {/* Grilla */}
-        <div style={{
-          display:"grid",
-          gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
-          gap: isMobile ? "16px" : "24px",
-        }}>
-          {filtered.map(p => (
-            <ProductCard key={p.id} product={p} estado={estadoDe(p)} onClick={() => onSelect(p)} />
-          ))}
-        </div>
+        {/* Grilla, agrupada por talla; las vendidas van al final */}
+        {grupos.map(g => (
+          <section key={g.titulo} style={{ marginBottom: isMobile ? "40px" : "56px" }}>
+            <h2 style={{
+              fontFamily:"'Josefin Sans',sans-serif", fontWeight:600,
+              fontSize:"1.25rem", color: g.vendidas ? "var(--text-muted)" : "var(--text-primary)",
+              margin:"0 0 20px", display:"flex", alignItems:"baseline", gap:"10px",
+            }}>
+              {g.titulo}
+              <span style={{ fontFamily:"'DM Sans',sans-serif", fontWeight:400, fontSize:"14px", color:"var(--text-muted)" }}>
+                {g.items.length} {g.items.length === 1 ? "prenda" : "prendas"}
+              </span>
+            </h2>
+            <div style={{
+              display:"grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+              gap: isMobile ? "16px" : "24px",
+            }}>
+              {g.items.map(p => (
+                <ProductCard key={p.id} product={p} estado={estadoDe(p)} onClick={() => onSelect(p)} />
+              ))}
+            </div>
+          </section>
+        ))}
+
 
         {filtered.length === 0 && (
           <p style={{ fontFamily:"'DM Sans',sans-serif", color:"var(--text-muted)", fontSize:"14px", marginTop:"48px" }}>
@@ -548,6 +653,9 @@ function DetailView({ product, onBack, carrito, onOpenCart, estadoDe }) {
             </h1>
             <p style={{ fontFamily:"'DM Sans',sans-serif", fontWeight:500, fontSize:"1.375rem", color:"var(--text-primary)", marginTop:"10px" }}>
               {formatPrecio(product.price)}
+            </p>
+            <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px", color:"var(--text-secondary)", marginTop:"8px" }}>
+              Talla {product.talla}
             </p>
             <div style={{ borderTop:"1px solid var(--border-subtle)", marginTop:"28px", paddingTop:"24px" }}>
               <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px", color:"var(--text-primary)", marginBottom:"6px" }}>Materiales</p>
@@ -871,8 +979,25 @@ function App() {
   const [selected, setSelected] = useState(null);
   const [enCarrito, setEnCarrito] = useState(false);
 
+  // "El taller" tiene su propia direccion (tallermanoyaguja.com/#taller), asi se
+  // puede compartir el link y el boton Atras del navegador funciona.
+  const [enTaller, setEnTaller] = useState(location.hash === "#taller");
+  useEffect(() => {
+    const alCambiar = () => {
+      const t = location.hash === "#taller";
+      setEnTaller(t);
+      if (t) { setSelected(null); setEnCarrito(false); }
+    };
+    window.addEventListener("hashchange", alCambiar);
+    return () => window.removeEventListener("hashchange", alCambiar);
+  }, []);
+  const volverAlCatalogo = () => {
+    history.pushState(null, "", location.pathname + location.search);
+    setEnTaller(false);
+  };
+
   // Al cambiar de vista se vuelve arriba, si no la pagina queda a media altura.
-  useEffect(() => { window.scrollTo(0, 0); }, [selected, enCarrito]);
+  useEffect(() => { window.scrollTo(0, 0); }, [selected, enCarrito, enTaller]);
 
   const abrirCarrito = () => { setEnCarrito(true); setSelected(null); refrescar(); };
 
@@ -894,6 +1019,15 @@ function App() {
         carrito={carrito}
         onOpenCart={abrirCarrito}
         estadoDe={estadoDe}
+      />
+    );
+  }
+  if (enTaller) {
+    return (
+      <TallerView
+        onBack={volverAlCatalogo}
+        cartCount={carrito.items.length}
+        onOpenCart={abrirCarrito}
       />
     );
   }
