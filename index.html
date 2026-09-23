@@ -341,6 +341,13 @@ function irA(id) {
 
 function Header({ onBack, cartCount = 0, onOpenCart, seccion }) {
   const isMobile = useWindowWidth() < 640;
+  const enlaces = (
+    <nav style={{ display:"flex", alignItems:"center", gap: isMobile ? "24px" : "30px" }}>
+      <button className={`nav-link${!onBack?" active":""}`} onClick={onBack}>Catálogo</button>
+      <button className={`nav-link${seccion==="taller"?" active":""}`} onClick={() => navegar("taller")}>El taller</button>
+      <button className="nav-link" onClick={() => irA("contacto")}>Contacto</button>
+    </nav>
+  );
   return (
     <header style={{
       position:"sticky", top:0, zIndex:20,
@@ -356,13 +363,7 @@ function Header({ onBack, cartCount = 0, onOpenCart, seccion }) {
           <SVGLogo height={isMobile ? 56 : 92} />
         </div>
         <div style={{ display:"flex", alignItems:"center", gap: isMobile ? "0" : "30px" }}>
-          {!isMobile && (
-            <nav style={{ display:"flex", alignItems:"center", gap:"30px" }}>
-              <button className={`nav-link${!onBack?" active":""}`} onClick={onBack}>Catálogo</button>
-              <button className={`nav-link${seccion==="taller"?" active":""}`} onClick={() => { location.hash = "taller"; }}>El taller</button>
-              <button className="nav-link" onClick={() => irA("contacto")}>Contacto</button>
-            </nav>
-          )}
+          {!isMobile && enlaces}
           {onOpenCart && (
             <button
               className="cart-button"
@@ -376,6 +377,12 @@ function Header({ onBack, cartCount = 0, onOpenCart, seccion }) {
           )}
         </div>
       </div>
+      {/* En celular el menu va en una fila propia bajo el logo, siempre visible. */}
+      {isMobile && (
+        <div style={{ borderTop:"1px solid var(--border-subtle)", padding:"10px 16px" }}>
+          {enlaces}
+        </div>
+      )}
     </header>
   );
 }
@@ -505,7 +512,8 @@ function TallerView({ onBack, cartCount, onOpenCart }) {
 }
 
 function CatalogView({ onSelect, cartCount, onOpenCart, estadoDe }) {
-  const [activeFilter, setActiveFilter] = useState("Todas");
+  const [activeFilter, setFiltro] = useState(filtroCatalogo);
+  const setActiveFilter = (f) => { filtroCatalogo = f; setFiltro(f); };
   const isMobile = useWindowWidth() < 640;
 
   const filtered = useMemo(() => {
@@ -975,39 +983,69 @@ function useStock() {
   return { estadoDe, refrescar };
 }
 
+/* ── Navegacion ──
+   Cada vista tiene su direccion: el catalogo es tallermanoyaguja.com, y las demas
+   #taller, #carrito y #prenda-3. Asi el boton Atras del navegador vuelve a la vista
+   anterior en vez de salir de la web, y cada prenda se puede compartir por link. */
+function leerRuta() {
+  const h = location.hash.slice(1);
+  if (h === "taller" || h === "carrito") return { vista: h };
+  const m = h.match(/^prenda-(\d+)$/);
+  if (m && PRODUCTS.some((p) => p.id === Number(m[1]))) return { vista: "prenda", id: Number(m[1]) };
+  return { vista: "catalogo" };
+}
+
+// Lo que se recuerda del catalogo al salir, para dejarlo igual al volver.
+let alturaCatalogo = 0;
+let filtroCatalogo = "Todas";
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+function navegar(destino) {
+  if (location.hash === "#" + destino) return;
+  const desdeCatalogo = leerRuta().vista === "catalogo";
+  if (desdeCatalogo) alturaCatalogo = window.scrollY;
+  history.pushState({ desdeCatalogo }, "", "#" + destino);
+  window.dispatchEvent(new Event("rutacambio"));
+}
+
+// Si se llego desde el catalogo, se vuelve atras en el historial (igual que el
+// boton del navegador). Si se entro directo por un link, se abre el catalogo.
+function volverAlCatalogo() {
+  if (history.state && history.state.desdeCatalogo) { history.back(); return; }
+  alturaCatalogo = 0;
+  history.pushState(null, "", location.pathname + location.search);
+  window.dispatchEvent(new Event("rutacambio"));
+}
+
 function App() {
   const carrito = useCarrito();
   const { estadoDe, refrescar } = useStock();
-  const [selected, setSelected] = useState(null);
-  const [enCarrito, setEnCarrito] = useState(false);
-
-  // "El taller" tiene su propia direccion (tallermanoyaguja.com/#taller), asi se
-  // puede compartir el link y el boton Atras del navegador funciona.
-  const [enTaller, setEnTaller] = useState(location.hash === "#taller");
+  const [ruta, setRuta] = useState(leerRuta);
   useEffect(() => {
-    const alCambiar = () => {
-      const t = location.hash === "#taller";
-      setEnTaller(t);
-      if (t) { setSelected(null); setEnCarrito(false); }
-    };
+    const alCambiar = () => setRuta(leerRuta());
+    window.addEventListener("popstate", alCambiar);
     window.addEventListener("hashchange", alCambiar);
-    return () => window.removeEventListener("hashchange", alCambiar);
+    window.addEventListener("rutacambio", alCambiar);
+    return () => {
+      window.removeEventListener("popstate", alCambiar);
+      window.removeEventListener("hashchange", alCambiar);
+      window.removeEventListener("rutacambio", alCambiar);
+    };
   }, []);
-  const volverAlCatalogo = () => {
-    history.pushState(null, "", location.pathname + location.search);
-    setEnTaller(false);
-  };
 
-  // Al cambiar de vista se vuelve arriba, si no la pagina queda a media altura.
-  useEffect(() => { window.scrollTo(0, 0); }, [selected, enCarrito, enTaller]);
+  // Al volver al catalogo se retoma la altura donde estaba; las demas vistas parten arriba.
+  useEffect(() => {
+    window.scrollTo(0, ruta.vista === "catalogo" ? alturaCatalogo : 0);
+  }, [ruta.vista, ruta.id]);
 
-  const abrirCarrito = () => { setEnCarrito(true); setSelected(null); refrescar(); };
+  const abrirCarrito = () => { navegar("carrito"); refrescar(); };
+  const selected = ruta.vista === "prenda" ? PRODUCTS.find((p) => p.id === ruta.id) : null;
 
-  if (enCarrito) {
+  if (ruta.vista === "carrito") {
     return (
       <CartView
         carrito={carrito}
-        onBack={() => setEnCarrito(false)}
+        onBack={volverAlCatalogo}
         estadoDe={estadoDe}
         refrescarStock={refrescar}
       />
@@ -1017,14 +1055,14 @@ function App() {
     return (
       <DetailView
         product={selected}
-        onBack={() => setSelected(null)}
+        onBack={volverAlCatalogo}
         carrito={carrito}
         onOpenCart={abrirCarrito}
         estadoDe={estadoDe}
       />
     );
   }
-  if (enTaller) {
+  if (ruta.vista === "taller") {
     return (
       <TallerView
         onBack={volverAlCatalogo}
@@ -1035,7 +1073,7 @@ function App() {
   }
   return (
     <CatalogView
-      onSelect={setSelected}
+      onSelect={(p) => navegar(`prenda-${p.id}`)}
       cartCount={carrito.items.length}
       onOpenCart={abrirCarrito}
       estadoDe={estadoDe}
