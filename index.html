@@ -478,11 +478,7 @@ function TallerView({ onBack, cartCount, onOpenCart }) {
         alignItems:"start",
       }}>
       <div>
-        <p style={{ display:"flex", alignItems:"center", gap:"12px", fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"16px", color:"var(--text-muted)", margin:0 }}>
-          <SVGOval size={16} />
-          El taller
-        </p>
-        <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, fontSize: isMobile ? "1.8rem" : "2.4rem", lineHeight:1.1, margin:"18px 0 20px" }}>
+        <h1 style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:700, fontSize: isMobile ? "1.8rem" : "2.4rem", lineHeight:1.1, margin:"0 0 20px" }}>
           Somos un taller textil
         </h1>
         {[
@@ -494,6 +490,12 @@ function TallerView({ onBack, cartCount, onOpenCart }) {
             {t}
           </p>
         ))}
+        <a
+          className="btn btn-primario"
+          href="https://ig.me/m/manoyaguja"
+          target="_blank" rel="noopener noreferrer"
+          style={{ width:"auto", display:"inline-flex", marginTop:"32px" }}
+        >Escríbenos</a>
       </div>
       <Carrusel fotos={FOTOS_TALLER} />
       </main>
@@ -850,7 +852,7 @@ function CartView({ carrito, onBack, estadoDe, refrescarStock }) {
                     <span style={{ display:"flex", justifyContent:"space-between", gap:"12px", alignItems:"baseline" }}>
                       <span style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px" }}>{e.label}</span>
                       <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", fontWeight:500, whiteSpace:"nowrap" }}>
-                        {e.price > 0 ? formatPrecio(e.price) : e.id === "regiones" ? "Se cotiza" : "Gratis"}
+                        {e.price > 0 ? formatPrecio(e.price) : e.id === "regiones" ? "Por pagar" : "Gratis"}
                       </span>
                     </span>
                     <span style={{ display:"block", fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:"var(--text-muted)", lineHeight:1.5, marginTop:"4px" }}>
@@ -900,7 +902,7 @@ function CartView({ carrito, onBack, estadoDe, refrescarStock }) {
               </div>
               <div style={{ display:"flex", justifyContent:"space-between", fontFamily:"'DM Sans',sans-serif", fontSize:"15px", color:"var(--text-secondary)", marginBottom:"14px" }}>
                 <span>{envio.label}</span>
-                <span>{envio.price > 0 ? formatPrecio(envio.price) : envio.id === "regiones" ? "Se cotiza aparte" : "Gratis"}</span>
+                <span>{envio.price > 0 ? formatPrecio(envio.price) : envio.id === "regiones" ? "Por pagar" : "Gratis"}</span>
               </div>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", borderTop:"1px solid var(--border-subtle)", paddingTop:"14px" }}>
                 <span style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"1.1rem" }}>Total a pagar ahora</span>

@@ -58,7 +58,7 @@
     {
       id: "regiones",
       label: "Despacho a regiones",
-      detalle: "El costo del envío se cotiza y se paga aparte. Te escribimos por WhatsApp para coordinarlo.",
+      detalle: "El envío se paga al recibir. Te escribimos por WhatsApp para coordinarlo.",
       price: 0,
       pideDireccion: false
     }
