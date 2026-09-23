@@ -69,7 +69,7 @@
     PRECIO_PANTALON: PRECIO_PANTALON,
     PRODUCTS: PRODUCTS,
     ENVIOS: ENVIOS,
-    MATERIALES: "Telas compradas en el barrio Rosas y retazos reutilizados.",
+    MATERIALES: "Algodón y telas recicladas.",
     CUIDADO: "Lavar a mano o máquina en frío. No usar secadora. Planchar a temperatura media.",
     CATEGORIES: ["Todas","Chaquetas","Pantalones"],
     WHATSAPP: "56987362295",
