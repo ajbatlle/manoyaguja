@@ -36,7 +36,10 @@
     { id:12, name:"Pantalón 09", price:PRECIO_PANTALON, category:"Pantalones", talla:1, available:true, images:["assets/pantalon8.png"] },
     { id:13, name:"Pantalón 10", price:PRECIO_PANTALON, category:"Pantalones", talla:1, available:true, images:["assets/pantalon9.png"] },
     { id:14, name:"Pantalón 11", price:PRECIO_PANTALON, category:"Pantalones", talla:1, available:true, images:["assets/pantalon10.png"] },
-    { id:15, name:"Pantalón 12", price:PRECIO_PANTALON, category:"Pantalones", talla:2, available:false, images:["assets/pantalon11.png"] }
+    { id:15, name:"Pantalón 12", price:PRECIO_PANTALON, category:"Pantalones", talla:2, available:false, images:["assets/pantalon11.png"] },
+
+    // Los accesorios no llevan talla
+    { id:16, name:"Mochila 01",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-01.png","assets/mochila-01a.png"] }
   ];
 
   // Opciones de despacho. El precio tambien se valida en el servidor.
@@ -71,7 +74,7 @@
     ENVIOS: ENVIOS,
     MATERIALES: "Algodón y telas recicladas.",
     CUIDADO: "Lavar a mano o máquina en frío. No usar secadora. Planchar a temperatura media.",
-    CATEGORIES: ["Todas","Chaquetas","Pantalones"],
+    CATEGORIES: ["Todas","Chaquetas","Pantalones","Accesorios"],
     WHATSAPP: "56987362295",
     MONEDA: "CLP"
   };

@@ -317,7 +317,7 @@ function ProductCard({ product, estado = "disponible", onClick }) {
         }}>{product.name}</p>
         <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", fontWeight:500, color:"var(--text-secondary)", lineHeight:1.5 }}>
           {formatPrecio(product.price)}
-          <span style={{ color:"var(--text-muted)", fontWeight:400 }}> · Talla {product.talla}</span>
+          {product.talla != null && <span style={{ color:"var(--text-muted)", fontWeight:400 }}> · Talla {product.talla}</span>}
         </p>
       </div>
     </article>
@@ -525,8 +525,11 @@ function CatalogView({ onSelect, cartCount, onOpenCart, estadoDe }) {
 
   const vendidas = filtered.filter(p => estadoDe(p) === "vendida");
   const enVenta = filtered.filter(p => estadoDe(p) !== "vendida");
-  const tallas = [...new Set(enVenta.map(p => p.talla))].sort((a, b) => a - b);
-  const grupos = tallas.map(t => ({ titulo: `Talla ${t}`, items: enVenta.filter(p => p.talla === t) }));
+  const conTalla = enVenta.filter(p => p.talla != null);
+  const sinTalla = enVenta.filter(p => p.talla == null);
+  const tallas = [...new Set(conTalla.map(p => p.talla))].sort((a, b) => a - b);
+  const grupos = tallas.map(t => ({ titulo: `Talla ${t}`, items: conTalla.filter(p => p.talla === t) }));
+  if (sinTalla.length) grupos.push({ titulo: "Accesorios", items: sinTalla });
   if (vendidas.length) grupos.push({ titulo: "Vendidas", items: vendidas, vendidas: true });
 
   return (
@@ -664,9 +667,11 @@ function DetailView({ product, onBack, carrito, onOpenCart, estadoDe }) {
             <p style={{ fontFamily:"'DM Sans',sans-serif", fontWeight:500, fontSize:"1.375rem", color:"var(--text-primary)", marginTop:"10px" }}>
               {formatPrecio(product.price)}
             </p>
-            <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px", color:"var(--text-secondary)", marginTop:"8px" }}>
-              Talla {product.talla}
-            </p>
+            {product.talla != null && (
+              <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px", color:"var(--text-secondary)", marginTop:"8px" }}>
+                Talla {product.talla}
+              </p>
+            )}
             <div style={{ borderTop:"1px solid var(--border-subtle)", marginTop:"28px", paddingTop:"24px" }}>
               <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px", color:"var(--text-primary)", marginBottom:"6px" }}>Materiales</p>
               <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:"var(--text-muted)", lineHeight:1.6 }}>{MATERIALES}</p>
