@@ -39,7 +39,8 @@
     { id:15, name:"Pantalón 12", price:PRECIO_PANTALON, category:"Pantalones", talla:2, available:false, images:["assets/pantalon11.png"] },
 
     // Los accesorios no llevan talla
-    { id:16, name:"Mochila 01",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-01.png","assets/mochila-01a.png"] }
+    { id:16, name:"Mochila 01",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-01.png","assets/mochila-01a.png"] },
+    { id:17, name:"Mochila 02",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-02.png","assets/mochila-02a.png"] }
   ];
 
   // Opciones de despacho. El precio tambien se valida en el servidor.
