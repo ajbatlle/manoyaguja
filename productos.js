@@ -39,6 +39,8 @@
     { id:13, name:"Pantalón 10", price:PRECIO_PANTALON, category:"Pantalones", talla:1, available:true, images:["assets/pantalon9.png"] },
     { id:14, name:"Pantalón 11", price:PRECIO_PANTALON, category:"Pantalones", talla:1, available:true, images:["assets/pantalon10.png"] },
     { id:15, name:"Pantalón 12", price:PRECIO_PANTALON, category:"Pantalones", talla:2, available:false, images:["assets/pantalon11.png"] },
+    { id:20, name:"Pantalón 13", price:PRECIO_PANTALON, category:"Pantalones", talla:2, available:true, images:["assets/pantalon-a.png","assets/pantalon-a1.png"] },
+    { id:21, name:"Pantalón 14", price:PRECIO_PANTALON, category:"Pantalones", talla:2, available:true, images:["assets/pantalon-b.png","assets/pantalon-b1.png"] },
 
     // Los accesorios no llevan talla
     { id:16, name:"Mochila 01",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-01.png","assets/mochila-01a.png"] },
