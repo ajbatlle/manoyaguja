@@ -44,15 +44,90 @@ En la lista `ENVIOS`, el `price` de la opción `santiago`.
 
 ### Agregar una prenda nueva
 
-1. Dejar las fotos en `assets/`.
+1. Dejar las fotos en `assets/` (ver **Fotos de producto**, más abajo).
 2. Copiar una línea de `PRODUCTS` y cambiarle `id` (uno que no exista),
-   `name` e `images`.
+   `name` e `images`. El próximo id libre es el **25**; los ids nunca se
+   reutilizan, porque el stock vendido se guarda por id.
+3. Campos opcionales:
+   - `talla:2`: los accesorios no la llevan y salen en el grupo "Accesorios".
+   - `incluye:"Incluye portachupete y bolsa de tela."`: una línea bajo el
+     precio en la ficha, para los sets.
+
+Nombres de archivo: en minúsculas, sin tildes ni espacios. La foto principal va
+sin letra y las demás con `a`, `b`, `c`… (`mochila-04.jpg`, `mochila-04a.jpg`).
+
+### Ocultar una prenda sin marcarla vendida
+
+Para sacarla de la tienda por un tiempo (por ejemplo, mientras faltan fotos),
+poner `//` al comienzo de su línea en `productos.js` y quitar la coma de la línea
+de arriba si era la última. No aparece en el catálogo ni se puede pagar, y sus
+fotos siguen en `assets/`. Para volver a mostrarla, se deshace lo mismo.
+
+Hoy está oculto así el **Portawipes 01** (id 24), hasta tener fotos definitivas.
 
 ### Subir los cambios
 
 ```bash
 git add . && git commit -m "actualizo catálogo" && git push
 ```
+
+## Fotos de producto
+
+Todas las fotos de la tienda miden **1086 × 1448 px** (vertical 3:4), sobre
+fondo blanco y con la prenda del mismo tamaño que las demás. La tienda recorta
+cualquier otra proporción, así que las fotos deben llegar ya en 3:4.
+
+### Cómo tomar la foto (lo que más pesa)
+
+La edición solo funciona bien si la foto de origen es buena. Lo aprendido el
+24/10/2026, después de varios intentos fallidos con fotos tomadas sobre la mesa:
+
+- Colgar la prenda en la misma pared de siempre, de frente, sin zoom.
+- Usar luz de día pareja: sin sol directo y sin la ventana al lado.
+- Foto vertical, con la prenda entera y aire alrededor.
+- Frente y espalda en el mismo lugar y a la misma distancia.
+- No sirven las escenas sobre la mesa con varios objetos: al quitar el fondo,
+  Adobe borra parte de lo que se ve, y la luz de ventana deja sombras duras.
+
+### Dos caminos que funcionan
+
+**A. Foto editada con ChatGPT** (Mochilas 01 a 04 de frente, Portawipes 01b).
+No se toca, solo se ajusta al formato:
+
+```bash
+node herramientas/fotos/fotos.js vertical "<foto de ChatGPT>" assets/<nombre>.jpg
+```
+
+Si queda con el fondo gris claro, se le quita el fondo con Adobe (paso 2 del
+camino B) y se deja tal cual.
+
+**B. Foto colgada en la pared** (Chaqueta 04, Mochila 03 y 04 de espalda):
+
+1. Si es HEIC del iPhone, convertirla:
+   `powershell -ExecutionPolicy Bypass -File herramientas/fotos/heic-a-jpg.ps1 "<foto.HEIC>"`
+   (el permiso vale solo para ese comando; Windows bloquea los scripts por defecto)
+2. `node herramientas/fotos/fotos.js preparar <foto> <lista.jpg>` y pedirle a
+   Claude que le quite el fondo con Adobe (`image_remove_background` con
+   `backgroundColor: "#ffffff"`). **Sin tocar luz ni color.**
+3. `node herramientas/fotos/fotos.js encuadrar <sobre-blanco.jpg> assets/<nombre>.jpg`
+4. La foto de espalda se deja del mismo tamaño que la de frente:
+   `node herramientas/fotos/fotos.js igualar <espalda-sobre-blanco.jpg> assets/<frente>.jpg assets/<espalda>.jpg`
+
+### Antes de publicar
+
+- `node herramientas/fotos/fotos.js comparar revision.jpg assets/<nuevas> assets/<anteriores>`
+  y mirar las nuevas junto a las que ya están en la tienda.
+- Los originales se guardan en `../3 Fotos/Productos AAAA-MM-DD`.
+
+### Lo que no hay que hacer
+
+- Subir saturación o luz "para que se vean más vivas": quedan forzadas.
+- Igualar colores de forma automática con otra foto: deja tonos raros.
+- Inventar partes de la escena para llenar el formato vertical.
+
+Las herramientas están en `herramientas/fotos/`. Se instalan una sola vez con
+`cd herramientas/fotos && npm install` y no se publican en el sitio
+(`.vercelignore`).
 
 ## Cómo se evita vender dos veces la misma prenda
 
@@ -120,7 +195,8 @@ Ninguna de estas va en el repositorio.
 
 El sitio corre en Vercel, no en GitHub Pages. Vercel publica los archivos de la
 raíz tal cual y convierte cada archivo de `api/` en una función de servidor.
-No hay proceso de compilación ni `package.json`: es HTML y JavaScript sin más.
+No hay proceso de compilación ni `package.json` en la raíz: es HTML y JavaScript
+sin más. La carpeta `herramientas/` tiene el suyo, pero `.vercelignore` la deja fuera.
 
 Cada `git push` dispara un despliegue nuevo automáticamente.
 

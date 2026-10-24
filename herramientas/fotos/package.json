@@ -1,0 +1,8 @@
+{
+  "name": "fotos-mano-y-aguja",
+  "private": true,
+  "description": "Herramientas para dejar las fotos de producto listas para la tienda",
+  "dependencies": {
+    "sharp": "0.33.5"
+  }
+}
