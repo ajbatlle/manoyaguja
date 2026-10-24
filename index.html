@@ -672,6 +672,11 @@ function DetailView({ product, onBack, carrito, onOpenCart, estadoDe }) {
                 Talla {product.talla}
               </p>
             )}
+            {product.incluye && (
+              <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", color:"var(--text-secondary)", lineHeight:1.55, marginTop:"8px" }}>
+                {product.incluye}
+              </p>
+            )}
             <div style={{ borderTop:"1px solid var(--border-subtle)", marginTop:"28px", paddingTop:"24px" }}>
               <p style={{ fontFamily:"'Josefin Sans',sans-serif", fontWeight:600, fontSize:"15px", color:"var(--text-primary)", marginBottom:"6px" }}>Materiales</p>
               <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:"var(--text-muted)", lineHeight:1.6 }}>{MATERIALES}</p>
