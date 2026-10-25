@@ -46,10 +46,9 @@
     { id:16, name:"Mochila 01",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-01.png","assets/mochila-01a.png"] },
     { id:17, name:"Mochila 02",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-02.png","assets/mochila-02a.png"] },
     { id:22, name:"Mochila 03",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-03.jpg","assets/mochila-03a.jpg"] },
-    { id:23, name:"Mochila 04",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-04.jpg","assets/mochila-04a.jpg"] }
-    // Oculto hasta tener las fotos definitivas: para volver a mostrarlo, quitar las // y poner una coma al final de la linea de arriba.
+    { id:23, name:"Mochila 04",  price:32000,           category:"Accesorios", available:true, images:["assets/mochila-04.jpg","assets/mochila-04a.jpg"] },
     // Se vende como set: portawipes + portachupete + bolsa
-    // { id:24, name:"Portawipes 01", price:20000,         category:"Accesorios", available:true, incluye:"Incluye portachupete y bolsa de tela.", images:["assets/portawipes-01.jpg","assets/portawipes-01a.jpg","assets/portawipes-01b.jpg"] }
+    { id:24, name:"Portawipes 01", price:20000,         category:"Accesorios", available:true, incluye:"Incluye portachupete y bolsa de tela.", images:["assets/portawipes-01.jpg","assets/portawipes-01a.jpg","assets/portawipes-01b.jpg"] }
   ];
 
   // Opciones de despacho. El precio tambien se valida en el servidor.
